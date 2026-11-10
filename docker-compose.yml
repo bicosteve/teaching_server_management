@@ -1,0 +1,40 @@
+services:
+  db:
+    image: postgres:18-alpine
+    container_name: tsm-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  server:
+    build: ./server
+    container_name: tsm-server
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      MODE: ${MODE}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./server/src:/workspace/src
+      - ./server/pom.xml:/workspace/pom.xml
+      - ./server/docker/entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
+      - maven_cache:/root/.m2
+    ports:
+      - "${SERVER_PORT}:8080"
+
+volumes:
+  postgres_data:
+  maven_cache:

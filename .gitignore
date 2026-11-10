@@ -1,8 +1,13 @@
 HELP.md
 target/
+**/target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+
+### Client ###
+.venv/
+venv/
 
 ### STS ###
 .apt_generated
@@ -31,3 +36,11 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Local env ###
+.env
+.env.local
+
+### DevTools ###
+.reloadtrigger
+**/target/**/.reloadtrigger

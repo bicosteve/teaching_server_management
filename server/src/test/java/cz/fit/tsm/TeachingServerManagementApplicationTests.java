@@ -1,4 +1,4 @@
-package cz.fit.mit.Teaching_Server_Management;
+package cz.fit.tsm;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

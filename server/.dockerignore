@@ -1,0 +1,15 @@
+.git
+.gitattributes
+.gitignore
+.idea
+.vscode
+*.iml
+target
+docs
+HELP.md
+README.md
+.env
+.env.*
+!.env.example
+**/.DS_Store
+**/Thumbs.db

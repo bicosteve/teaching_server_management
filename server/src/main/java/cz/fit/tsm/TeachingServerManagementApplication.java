@@ -1,4 +1,4 @@
-package cz.fit.mit.Teaching_Server_Management;
+package cz.fit.tsm;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
