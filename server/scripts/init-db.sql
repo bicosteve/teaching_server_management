@@ -8,9 +8,9 @@ CREATE TABLE IF NOT EXISTS users (
 	last_name TEXT NOT NULL,
 	email TEXT NOT NULL UNIQUE,
 	password_hash TEXT NOT NULL,
-	role TEXT NOT NULL,
+	role TEXT NOT NULL CHECK (role IN ('ADMIN', 'TEACHER', 'STUDENT')),
 	username TEXT NOT NULL UNIQUE,
-	status TEXT NOT NULL,
+	status TEXT NOT NULL CHECK (status IN ('ACTIVE', 'INACTIVE', 'PENDING')),
 	created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

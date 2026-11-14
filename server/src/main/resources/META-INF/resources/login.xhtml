@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="jakarta.faces.html"
+	xmlns:f="jakarta.faces.core"
+	xmlns:p="http://primefaces.org/ui">
+<h:head>
+	<title>#{msg['login.title']}</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1"/>
+	<link rel="stylesheet" href="/webjars/primeflex/4.0.0/primeflex.min.css"/>
+</h:head>
+<h:body>
+	<div class="flex align-items-center justify-content-center min-h-screen p-3">
+		<p:card styleClass="w-full md:w-25rem">
+			<f:facet name="title">#{msg['app.name']}</f:facet>
+			<f:facet name="subtitle">#{msg['login.subtitle']}</f:facet>
+
+			<h:form id="loginForm" styleClass="ui-fluid">
+				<p:messages id="messages" showDetail="false" closable="true"/>
+
+				<div class="field">
+					<p:outputLabel for="usernameOrEmail" value="#{msg['login.usernameOrEmail']}"/>
+					<p:inputText id="usernameOrEmail"
+						value="#{loginBean.usernameOrEmail}"
+						required="true"
+						requiredMessage="#{msg['login.usernameOrEmail.required']}"
+						autocomplete="username"/>
+				</div>
+
+				<div class="field">
+					<p:outputLabel for="password" value="#{msg['login.password']}"/>
+					<p:password id="password"
+						value="#{loginBean.password}"
+						required="true"
+						requiredMessage="#{msg['login.password.required']}"
+						redisplay="false"
+						toggleMask="true"
+						autocomplete="current-password"/>
+				</div>
+
+				<p:commandButton id="loginButton"
+					value="#{msg['login.submit']}"
+					icon="pi pi-sign-in"
+					action="#{loginBean.login}"
+					update="messages"
+					process="@form"
+					styleClass="w-full"/>
+			</h:form>
+		</p:card>
+	</div>
+</h:body>
+</html>
