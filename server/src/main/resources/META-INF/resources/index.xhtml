@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="jakarta.faces.html"
+	xmlns:f="jakarta.faces.core"
+	xmlns:p="http://primefaces.org/ui">
+<h:head>
+	<title>#{msg['home.title']}</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1"/>
+	<link rel="stylesheet" href="/webjars/primeflex/4.0.0/primeflex.min.css"/>
+</h:head>
+<h:body>
+	<div class="p-3">
+		<p:toolbar styleClass="mb-4">
+			<f:facet name="left">
+				<span class="font-bold text-xl">#{msg['app.name']}</span>
+			</f:facet>
+			<f:facet name="right">
+				<div class="flex align-items-center gap-2">
+					<span class="text-color-secondary">#{homeBean.displayName()}</span>
+					<h:form rendered="#{homeBean.authenticated}">
+						<p:commandButton value="#{msg['home.signOut']}"
+							action="#{homeBean.logout}"
+							icon="pi pi-sign-out"
+							styleClass="ui-button-outlined"
+							process="@this"/>
+					</h:form>
+					<p:button value="#{msg['home.signIn']}" outcome="/login" icon="pi pi-sign-in"
+						rendered="#{not homeBean.authenticated}"/>
+				</div>
+			</f:facet>
+		</p:toolbar>
+
+		<p:card>
+			<f:facet name="title">#{homeBean.authenticated ? msg['home.welcomeBack'] : msg['home.welcome']}</f:facet>
+			<f:facet name="subtitle">#{msg['home.subtitle']}</f:facet>
+
+			<p class="m-0 text-color-secondary mb-3">
+				#{msg['home.description']}
+			</p>
+
+			<div class="flex gap-2 flex-wrap">
+				<p:button value="#{msg['home.openLogin']}" outcome="/login" icon="pi pi-sign-in"
+					rendered="#{not homeBean.authenticated}"/>
+				<p:button value="#{msg['home.home']}" outcome="/index" icon="pi pi-home"
+					rendered="#{homeBean.authenticated}"/>
+			</div>
+		</p:card>
+	</div>
+</h:body>
+</html>

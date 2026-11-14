@@ -3,7 +3,7 @@ set -eu
 
 case "${MODE}" in
 	dev)
-		export SPRING_THYMELEAF_CACHE="${SPRING_THYMELEAF_CACHE:-false}"
+		/workspace/scripts/seed-users.sh
 
 		mkdir -p target/classes
 		# Must live on the classpath (see spring.devtools.restart.trigger-file docs).
