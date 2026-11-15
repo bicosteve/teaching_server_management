@@ -1,10 +1,15 @@
 package cz.fit.tsm.faces.common;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
 import cz.fit.tsm.dto.UserResponse;
 import cz.fit.tsm.security.RoleHomes;
+import cz.fit.tsm.security.UserPrincipal;
 import jakarta.faces.context.FacesContext;
 import jakarta.inject.Named;
 
@@ -13,12 +18,19 @@ import jakarta.inject.Named;
 @RequestScope
 public class HomeBean {
 
+	private static final Logger log = LoggerFactory.getLogger(HomeBean.class);
+
 	public UserResponse getCurrentUser() {
-		Object user = FacesContext.getCurrentInstance().getExternalContext().getSessionMap().get("currentUser");
-		return user instanceof UserResponse response ? response : null;
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		if (auth != null && auth.getPrincipal() instanceof UserPrincipal principal) {
+			return UserResponse.from(principal);
+		}
+		return null;
 	}
 
 	public String logout() {
+		log.info("logout: invalidating session");
+		SecurityContextHolder.clearContext();
 		FacesContext.getCurrentInstance().getExternalContext().invalidateSession();
 		return "/login.xhtml?faces-redirect=true";
 	}

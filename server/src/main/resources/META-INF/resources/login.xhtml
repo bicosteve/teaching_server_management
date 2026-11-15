@@ -3,6 +3,10 @@
 	xmlns:h="jakarta.faces.html"
 	xmlns:f="jakarta.faces.core"
 	xmlns:p="http://primefaces.org/ui">
+<f:view>
+<f:metadata>
+	<f:event type="preRenderView" listener="#{loginBean.redirectIfAuthenticated}"/>
+</f:metadata>
 <h:head>
 	<title>#{msg['login.title']}</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -48,4 +52,5 @@
 		</p:card>
 	</div>
 </h:body>
+</f:view>
 </html>

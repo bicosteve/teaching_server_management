@@ -16,12 +16,13 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 
+/**
+ * Authenticates API requests that send {@code Authorization: Bearer <access-jwt>}.
+ * Browser/Faces traffic relies on the HTTP session instead.
+ */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-
-	public static final String ACCESS_TOKEN_SESSION_KEY = "accessToken";
 
 	private final JwtService jwtService;
 	private final CustomUserDetailsService userDetailsService;
@@ -32,23 +33,32 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	}
 
 	@Override
+	protected boolean shouldNotFilter(HttpServletRequest request) {
+		return !request.getServletPath().startsWith("/api/");
+	}
+
+	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
-		String token = resolveToken(request);
-		if (token != null && !isLoggedIn()) {
-			try {
-				String username = jwtService.extractUsername(token);
-				UserDetails user = userDetailsService.loadUserByUsername(username);
-				if (jwtService.isTokenValid(token, user.getUsername()) && user.isEnabled()) {
-					SecurityContextHolder.getContext().setAuthentication(
-							new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities()));
-				}
-			}
-			catch (Exception ignored) {
-				SecurityContextHolder.clearContext();
-			}
+		String accessToken = resolveBearerToken(request);
+		if (accessToken != null && !isLoggedIn()) {
+			authenticateWithAccessToken(accessToken);
 		}
 		filterChain.doFilter(request, response);
+	}
+
+	private void authenticateWithAccessToken(String accessToken) {
+		try {
+			String username = jwtService.extractUsername(accessToken);
+			UserDetails user = userDetailsService.loadUserByUsername(username);
+			if (jwtService.isAccessTokenValid(accessToken, user.getUsername()) && user.isEnabled()) {
+				SecurityContextHolder.getContext().setAuthentication(
+						new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities()));
+			}
+		}
+		catch (Exception ignored) {
+			SecurityContextHolder.clearContext();
+		}
 	}
 
 	private static boolean isLoggedIn() {
@@ -56,13 +66,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		return auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken);
 	}
 
-	private static String resolveToken(HttpServletRequest request) {
+	private static String resolveBearerToken(HttpServletRequest request) {
 		String header = request.getHeader(HttpHeaders.AUTHORIZATION);
 		if (header != null && header.startsWith("Bearer ")) {
-			return header.substring(7);
+			String bearer = header.substring(7);
+			return bearer.isBlank() ? null : bearer;
 		}
-		HttpSession session = request.getSession(false);
-		Object token = session == null ? null : session.getAttribute(ACCESS_TOKEN_SESSION_KEY);
-		return token instanceof String value && !value.isBlank() ? value : null;
+		return null;
 	}
 }

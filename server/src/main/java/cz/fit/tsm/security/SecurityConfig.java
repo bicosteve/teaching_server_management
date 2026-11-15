@@ -1,7 +1,5 @@
 package cz.fit.tsm.security;
 
-import java.io.IOException;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -17,7 +15,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 @Configuration
 @EnableWebSecurity
@@ -38,7 +35,7 @@ public class SecurityConfig {
 				.authorizeHttpRequests(auth -> auth
 						.requestMatchers("/jakarta.faces.resource/**", "/webjars/**", "/login", "/login.xhtml").permitAll()
 						.requestMatchers("/forbidden", "/forbidden.xhtml").authenticated()
-						.requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+						.requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/refresh").permitAll()
 						.requestMatchers(HttpMethod.GET, "/", "/index", "/index.xhtml").permitAll()
 						.requestMatchers(
 								path("/api/teacher"), path("/api/teacher/**"),

@@ -27,7 +27,7 @@ public class AuthService {
 	}
 
 	@Transactional(readOnly = true)
-	public AuthResponse login(LoginRequest request) {
+	public User authenticate(LoginRequest request) {
 		String identifier = request.usernameOrEmail().trim();
 		User user = userRepository.findByUsernameOrEmail(identifier, identifier.toLowerCase())
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
@@ -38,8 +38,34 @@ public class AuthService {
 		if (user.getStatus() != UserStatus.ACTIVE) {
 			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Account is not active");
 		}
+		return user;
+	}
 
-		return AuthResponse.bearer(jwtService.generateToken(user), UserResponse.from(user));
+	@Transactional(readOnly = true)
+	public AuthResponse login(LoginRequest request) {
+		return issueTokens(authenticate(request));
+	}
+
+	@Transactional(readOnly = true)
+	public AuthResponse refresh(String refreshToken) {
+		if (refreshToken == null || refreshToken.isBlank()) {
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token required");
+		}
+		try {
+			String username = jwtService.extractRefreshUsername(refreshToken);
+			User user = userRepository.findByUsername(username)
+					.orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token"));
+			if (user.getStatus() != UserStatus.ACTIVE) {
+				throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Account is not active");
+			}
+			return issueTokens(user);
+		}
+		catch (ResponseStatusException ex) {
+			throw ex;
+		}
+		catch (Exception ex) {
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token");
+		}
 	}
 
 	@Transactional(readOnly = true)
@@ -47,5 +73,12 @@ public class AuthService {
 		User user = userRepository.findByUsername(username)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 		return UserResponse.from(user);
+	}
+
+	private AuthResponse issueTokens(User user) {
+		return AuthResponse.bearer(
+				jwtService.generateAccessToken(user),
+				jwtService.generateRefreshToken(user),
+				UserResponse.from(user));
 	}
 }
