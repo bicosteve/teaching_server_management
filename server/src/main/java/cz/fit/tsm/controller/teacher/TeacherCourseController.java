@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import cz.fit.tsm.dto.CourseRequestResponse;
+import cz.fit.tsm.dto.CourseResponse;
 import cz.fit.tsm.dto.CreateCourseRequest;
 import cz.fit.tsm.security.UserPrincipal;
 import cz.fit.tsm.service.CourseService;
@@ -29,13 +29,13 @@ public class TeacherCourseController {
 	}
 
 	@GetMapping
-	public List<CourseRequestResponse> list(@AuthenticationPrincipal UserPrincipal principal) {
-		return courseService.listCourseRequests(principal.getId());
+	public List<CourseResponse> list(@AuthenticationPrincipal UserPrincipal principal) {
+		return courseService.listCourses(principal.getId());
 	}
 
 	@PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseStatus(HttpStatus.CREATED)
-	public CourseRequestResponse create(@AuthenticationPrincipal UserPrincipal principal,
+	public CourseResponse create(@AuthenticationPrincipal UserPrincipal principal,
 			@Valid @RequestBody CreateCourseRequest request) {
 		return courseService.requestCourse(principal.getId(), request);
 	}

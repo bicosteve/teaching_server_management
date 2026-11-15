@@ -1,68 +1,13 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml"
-	xmlns:h="jakarta.faces.html"
-	xmlns:f="jakarta.faces.core"
-	xmlns:p="http://primefaces.org/ui">
-<h:head>
-	<title>#{msg['teacher.home.title']}</title>
-	<meta name="viewport" content="width=device-width, initial-scale=1"/>
-	<link rel="stylesheet" href="/webjars/primeflex/4.0.0/primeflex.min.css"/>
-</h:head>
-<h:body>
-	<div class="p-3">
-		<p:toolbar styleClass="mb-4">
-			<f:facet name="left">
-				<span class="font-bold text-xl">#{msg['app.name']}</span>
-			</f:facet>
-			<f:facet name="right">
-				<div class="flex align-items-center gap-2">
-					<span class="text-color-secondary">#{homeBean.displayName()}</span>
-					<p:tag value="#{homeBean.roleLabel()}" severity="info"/>
-					<h:form>
-						<p:commandButton value="#{msg['home.signOut']}"
-							action="#{homeBean.logout}"
-							icon="pi pi-sign-out"
-							styleClass="ui-button-outlined"
-							process="@this"/>
-					</h:form>
-				</div>
-			</f:facet>
-		</p:toolbar>
-
-		<p:card>
-			<f:facet name="title">#{msg['teacher.course.listTitle']}</f:facet>
-			<f:facet name="subtitle">#{msg['teacher.course.listSubtitle']}</f:facet>
-
-			<p:dataTable id="courseList"
-				value="#{teacherCourseBean.courses}"
-				var="course"
-				emptyMessage="#{msg['teacher.course.empty']}"
-				stripedRows="true"
-				styleClass="w-full mb-3">
-				<p:column headerText="#{msg['teacher.course.name']}">
-					<span class="font-medium">#{course.name()}</span>
-				</p:column>
-				<p:column headerText="#{msg['teacher.course.academicYear']}">
-					#{course.academicYear()}
-				</p:column>
-				<p:column headerText="#{msg['teacher.course.description']}">
-					<span class="text-color-secondary">
-						#{empty course.description() ? msg['teacher.course.noDescription'] : course.description()}
-					</span>
-				</p:column>
-				<p:column headerText="#{msg['teacher.course.status']}" style="width:9rem">
-					<p:tag value="#{course.status()}"
-						severity="#{course.status().name() eq 'PENDING' ? 'warn'
-							: (course.status().name() eq 'APPROVED' ? 'info'
-							: (course.status().name() eq 'EXECUTED' ? 'success'
-							: (course.status().name() eq 'REJECTED' ? 'danger' : 'secondary')))}"/>
-				</p:column>
-			</p:dataTable>
-
-			<p:button value="#{msg['teacher.course.createTitle']}"
-				outcome="/teacher/create-course"
-				icon="pi pi-plus"/>
-		</p:card>
-	</div>
-</h:body>
+	xmlns:ui="jakarta.faces.facelets">
+<ui:composition template="/templates/shell.xhtml">
+	<ui:define name="title">#{msg['teacher.home.title']}</ui:define>
+	<ui:define name="nav">
+		<ui:include src="/includes/nav-teacher.xhtml"/>
+	</ui:define>
+	<ui:define name="content">
+		<ui:include src="#{teacherNavBean.fragment}"/>
+	</ui:define>
+</ui:composition>
 </html>

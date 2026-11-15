@@ -1,0 +1,37 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="jakarta.faces.facelets"
+	xmlns:p="http://primefaces.org/ui">
+	<div class="grid">
+		<div class="col-12 sm:col-6 lg:col-4 xl:col-3">
+			<p:card styleClass="h-full">
+				<p:commandLink action="#{teacherNavBean.showCreateCourse}"
+					update=":appShell:appNav :appShell:appContent" process="@this"
+					styleClass="flex flex-column align-items-center justify-content-center gap-2
+						py-3 px-2 no-underline text-color hover:surface-hover border-round w-full">
+					<span class="flex align-items-center justify-content-center
+						border-circle border-1 surface-border text-primary w-2rem h-2rem">
+						<span class="pi pi-plus" aria-hidden="true"></span>
+					</span>
+					<span class="text-sm font-normal text-color-secondary m-0">#{msg['teacher.course.createCard']}</span>
+				</p:commandLink>
+			</p:card>
+		</div>
+		<ui:repeat value="#{teacherCourseBean.courses}" var="course">
+			<div class="col-12 sm:col-6 lg:col-4 xl:col-3">
+				<p:card styleClass="h-full">
+					<div class="flex align-items-center justify-content-between gap-2 mb-1">
+						<span class="text-lg font-medium line-height-2">#{course.name()}</span>
+						<p:tag value="#{course.status()}"
+							severity="#{course.status().name() eq 'PENDING' ? 'warn'
+								: (course.status().name() eq 'SYNCED' ? 'success'
+								: (course.status().name() eq 'FAILED' ? 'danger' : 'secondary'))}"/>
+					</div>
+					<div class="text-sm font-normal text-color-secondary mb-2">#{course.academicYear()}</div>
+					<p class="m-0 text-sm font-normal text-color-secondary white-space-nowrap overflow-hidden text-overflow-ellipsis">
+						#{empty course.description() ? msg['teacher.course.noDescription'] : course.description()}
+					</p>
+				</p:card>
+			</div>
+		</ui:repeat>
+	</div>
+</ui:composition>

@@ -12,17 +12,20 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1"/>
 	<link rel="stylesheet" href="/webjars/primeflex/4.0.0/primeflex.min.css"/>
 </h:head>
-<h:body>
+<h:body styleClass="ui-widget">
 	<div class="flex align-items-center justify-content-center min-h-screen p-3">
 		<p:card styleClass="w-full md:w-25rem">
-			<f:facet name="title">#{msg['app.name']}</f:facet>
-			<f:facet name="subtitle">#{msg['login.subtitle']}</f:facet>
+			<div class="mb-3">
+				<div class="text-lg font-medium line-height-2 m-0">#{msg['app.name']}</div>
+				<div class="text-sm font-normal text-color-secondary line-height-2 m-0 mt-1">#{msg['login.subtitle']}</div>
+			</div>
 
 			<h:form id="loginForm" styleClass="ui-fluid">
 				<p:messages id="messages" showDetail="false" closable="true"/>
 
 				<div class="field">
-					<p:outputLabel for="usernameOrEmail" value="#{msg['login.usernameOrEmail']}"/>
+					<p:outputLabel for="usernameOrEmail" value="#{msg['login.usernameOrEmail']}"
+						styleClass="text-sm font-normal"/>
 					<p:inputText id="usernameOrEmail"
 						value="#{loginBean.usernameOrEmail}"
 						required="true"
@@ -31,7 +34,8 @@
 				</div>
 
 				<div class="field">
-					<p:outputLabel for="password" value="#{msg['login.password']}"/>
+					<p:outputLabel for="password" value="#{msg['login.password']}"
+						styleClass="text-sm font-normal"/>
 					<p:password id="password"
 						value="#{loginBean.password}"
 						required="true"

@@ -1,39 +1,13 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml"
-	xmlns:h="jakarta.faces.html"
-	xmlns:f="jakarta.faces.core"
-	xmlns:p="http://primefaces.org/ui">
-<h:head>
-	<title>#{msg['admin.home.title']}</title>
-	<meta name="viewport" content="width=device-width, initial-scale=1"/>
-	<link rel="stylesheet" href="/webjars/primeflex/4.0.0/primeflex.min.css"/>
-</h:head>
-<h:body>
-	<div class="p-3">
-		<p:toolbar styleClass="mb-4">
-			<f:facet name="left">
-				<span class="font-bold text-xl">#{msg['app.name']}</span>
-			</f:facet>
-			<f:facet name="right">
-				<div class="flex align-items-center gap-2">
-					<span class="text-color-secondary">#{homeBean.displayName()}</span>
-					<p:tag value="#{homeBean.roleLabel()}" severity="info"/>
-					<h:form>
-						<p:commandButton value="#{msg['home.signOut']}"
-							action="#{homeBean.logout}"
-							icon="pi pi-sign-out"
-							styleClass="ui-button-outlined"
-							process="@this"/>
-					</h:form>
-				</div>
-			</f:facet>
-		</p:toolbar>
-
-		<p:card>
-			<f:facet name="title">#{msg['admin.home.welcome']}</f:facet>
-			<f:facet name="subtitle">#{msg['admin.home.subtitle']}</f:facet>
-			<p class="m-0 text-color-secondary">#{msg['admin.home.description']}</p>
-		</p:card>
-	</div>
-</h:body>
+	xmlns:ui="jakarta.faces.facelets">
+<ui:composition template="/templates/shell.xhtml">
+	<ui:define name="title">#{msg['admin.home.title']}</ui:define>
+	<ui:define name="nav">
+		<ui:include src="/includes/nav-admin.xhtml"/>
+	</ui:define>
+	<ui:define name="content">
+		<ui:include src="/admin/fragments/operations.xhtml"/>
+	</ui:define>
+</ui:composition>
 </html>

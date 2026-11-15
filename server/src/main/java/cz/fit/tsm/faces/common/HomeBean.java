@@ -40,6 +40,18 @@ public class HomeBean {
 		return user == null ? "/login" : RoleHomes.path(user.role());
 	}
 
+	public String getNavFragment() {
+		UserResponse user = getCurrentUser();
+		if (user == null) {
+			return null;
+		}
+		return switch (user.role()) {
+			case ADMIN -> "/includes/nav-admin.xhtml";
+			case TEACHER -> "/includes/nav-teacher.xhtml";
+			case STUDENT -> "/includes/nav-student.xhtml";
+		};
+	}
+
 	public String displayName() {
 		UserResponse user = getCurrentUser();
 		return user == null ? Messages.get("app.guest") : user.firstName() + " " + user.lastName();

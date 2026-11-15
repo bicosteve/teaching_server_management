@@ -15,18 +15,17 @@ public class HomeController {
 		return principal == null ? "redirect:/login" : "redirect:" + RoleHomes.path(principal.getRole());
 	}
 
-	@GetMapping({"/teacher", "/teacher/"})
-	public String teacherHome() {
+	@GetMapping({"/teacher", "/teacher/", "/admin", "/admin/", "/student", "/student/"})
+	public String roleRoot(jakarta.servlet.http.HttpServletRequest request) {
+		String path = request.getRequestURI().replaceAll("/$", "");
+		return "redirect:" + path + "/index";
+	}
+
+	@GetMapping({
+			"/teacher/courses", "/teacher/courses.xhtml",
+			"/teacher/requests", "/teacher/requests.xhtml",
+			"/teacher/create-course", "/teacher/create-course.xhtml"})
+	public String teacherLegacyTabs() {
 		return "redirect:/teacher/index";
-	}
-
-	@GetMapping({"/admin", "/admin/"})
-	public String adminHome() {
-		return "redirect:/admin/index";
-	}
-
-	@GetMapping({"/student", "/student/"})
-	public String studentHome() {
-		return "redirect:/student/index";
 	}
 }

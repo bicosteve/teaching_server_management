@@ -1,74 +1,139 @@
 package cz.fit.tsm.faces.teacher;
 
+import java.io.Serializable;
 import java.time.Year;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-import org.springframework.web.context.annotation.RequestScope;
+import org.springframework.web.context.annotation.SessionScope;
 import org.springframework.web.server.ResponseStatusException;
 
 import cz.fit.tsm.dto.CourseRequestResponse;
+import cz.fit.tsm.dto.CourseResponse;
 import cz.fit.tsm.dto.CreateCourseRequest;
 import cz.fit.tsm.dto.UserResponse;
 import cz.fit.tsm.faces.common.HomeBean;
 import cz.fit.tsm.faces.common.Messages;
+import cz.fit.tsm.model.ServerOperationStatus;
 import cz.fit.tsm.service.CourseService;
-import jakarta.annotation.PostConstruct;
-import jakarta.faces.application.FacesMessage;
-import jakarta.faces.context.FacesContext;
 import jakarta.inject.Named;
 
 @Named
 @Component
-@RequestScope
-public class TeacherCourseBean {
+@SessionScope
+public class TeacherCourseBean implements Serializable {
 
+	private static final long serialVersionUID = 1L;
 	private static final int ACADEMIC_YEAR_OPTIONS = 2;
 
 	private final CourseService courseService;
 	private final HomeBean homeBean;
+	private final TeacherNavBean nav;
 
+	private String editId;
 	private String name;
 	private String description;
 	private String academicYear;
-	private List<CourseRequestResponse> courses = Collections.emptyList();
+	private List<CourseResponse> courses = Collections.emptyList();
 
-	public TeacherCourseBean(CourseService courseService, HomeBean homeBean) {
+	public TeacherCourseBean(CourseService courseService, HomeBean homeBean, @Lazy TeacherNavBean nav) {
 		this.courseService = courseService;
 		this.homeBean = homeBean;
+		this.nav = nav;
+		reloadCourses();
+		prepareCreate();
 	}
 
-	@PostConstruct
-	void loadCourses() {
+	public void reloadCourses() {
 		UserResponse user = homeBean.getCurrentUser();
-		courses = user == null
-				? Collections.emptyList()
-				: courseService.listCourseRequests(user.id());
-		List<String> years = getAcademicYearOptions();
-		if (!years.isEmpty()) {
-			academicYear = years.get(0);
-		}
+		courses = user == null ? List.of() : courseService.listCourses(user.id());
 	}
 
-	public String createCourse() {
+	public void prepareCreate() {
+		editId = null;
+		name = null;
+		description = null;
+		List<String> years = getAcademicYearOptions();
+		academicYear = years.isEmpty() ? null : years.get(0);
+	}
+
+	public void prepareEdit(UUID operationId) {
 		UserResponse user = homeBean.getCurrentUser();
 		if (user == null) {
-			addError(Messages.get("teacher.course.forbidden"));
-			return null;
+			Messages.errorKey("teacher.course.forbidden");
+			prepareCreate();
+			return;
 		}
 		try {
-			courseService.requestCourse(user.id(), new CreateCourseRequest(name, description, academicYear));
-			return "/teacher/index.xhtml?faces-redirect=true";
+			CourseRequestResponse request = courseService.getCourseRequest(operationId, user.id());
+			if (request.status() == ServerOperationStatus.COMPLETED) {
+				Messages.errorKey("teacher.requests.notEditable");
+				prepareCreate();
+				return;
+			}
+			editId = request.id().toString();
+			name = request.name();
+			description = request.description();
+			academicYear = request.academicYear();
 		}
 		catch (ResponseStatusException ex) {
-			addError(ex.getReason() != null ? ex.getReason() : Messages.get("teacher.course.failed"));
-			return null;
+			Messages.error(ex.getReason() != null ? ex.getReason() : Messages.get("teacher.requests.notFound"));
+			prepareCreate();
 		}
 	}
 
-	public List<CourseRequestResponse> getCourses() {
+	public void saveCourse() {
+		UserResponse user = homeBean.getCurrentUser();
+		if (user == null) {
+			Messages.errorKey("teacher.course.forbidden");
+			return;
+		}
+		try {
+			CreateCourseRequest request = new CreateCourseRequest(name, description, academicYear);
+			if (!isEditMode()) {
+				courseService.requestCourse(user.id(), request);
+				reloadCourses();
+				prepareCreate();
+				nav.showCourses();
+				return;
+			}
+			courseService.updateCourseRequest(UUID.fromString(editId), user.id(), request);
+			prepareCreate();
+			nav.showRequests();
+		}
+		catch (ResponseStatusException ex) {
+			Messages.error(ex.getReason() != null ? ex.getReason() : Messages.get("teacher.course.failed"));
+		}
+	}
+
+	public void cancelCourseForm() {
+		boolean editing = isEditMode();
+		prepareCreate();
+		if (editing) {
+			nav.showRequests();
+		}
+		else {
+			nav.showCourses();
+		}
+	}
+
+	public boolean isEditMode() {
+		return editId != null && !editId.isBlank();
+	}
+
+	public String getEditId() {
+		return editId;
+	}
+
+	public void setEditId(String editId) {
+		this.editId = editId;
+	}
+
+	public List<CourseResponse> getCourses() {
 		return courses;
 	}
 
@@ -104,10 +169,5 @@ public class TeacherCourseBean {
 			options.add(year + "/" + (year + 1));
 		}
 		return options;
-	}
-
-	private static void addError(String detail) {
-		FacesContext.getCurrentInstance().addMessage(null,
-				new FacesMessage(FacesMessage.SEVERITY_ERROR, detail, null));
 	}
 }

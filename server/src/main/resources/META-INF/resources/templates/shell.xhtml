@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="jakarta.faces.html"
+	xmlns:f="jakarta.faces.core"
+	xmlns:ui="jakarta.faces.facelets"
+	xmlns:p="http://primefaces.org/ui">
+<h:head>
+	<title><ui:insert name="title">#{msg['app.name']}</ui:insert></title>
+	<meta name="viewport" content="width=device-width, initial-scale=1"/>
+	<link rel="stylesheet" href="/webjars/primeflex/4.0.0/primeflex.min.css"/>
+</h:head>
+<h:body styleClass="ui-widget">
+	<div class="p-3 min-h-screen">
+		<ui:include src="/includes/app-topbar.xhtml"/>
+		<h:form id="appShell">
+			<div class="grid">
+				<aside class="col-12 md:col-3 lg:col-2">
+					<h:panelGroup id="appNav" layout="block"
+						styleClass="flex flex-row md:flex-column gap-2">
+						<ui:insert name="nav"/>
+					</h:panelGroup>
+				</aside>
+				<main class="col-12 md:col-9 lg:col-10">
+					<h:panelGroup id="appContent" layout="block">
+						<ui:insert name="content"/>
+					</h:panelGroup>
+				</main>
+			</div>
+		</h:form>
+	</div>
+</h:body>
+</html>

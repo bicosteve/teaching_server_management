@@ -3,6 +3,7 @@ package cz.fit.tsm.faces.common;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
+import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
 
 public final class Messages {
@@ -19,5 +20,14 @@ public final class Messages {
 		catch (MissingResourceException ex) {
 			return key;
 		}
+	}
+
+	public static void error(String detail) {
+		FacesContext.getCurrentInstance().addMessage(null,
+				new FacesMessage(FacesMessage.SEVERITY_ERROR, detail, null));
+	}
+
+	public static void errorKey(String key) {
+		error(get(key));
 	}
 }
