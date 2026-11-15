@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS courses (
 	name TEXT NOT NULL,
 	description TEXT,
 	academic_year TEXT NOT NULL,
-	archived_at TIMESTAMPTZ
+	archived_at TIMESTAMPTZ,
+	UNIQUE (name, academic_year)
 );
 
 CREATE TABLE IF NOT EXISTS enrollments (
@@ -67,7 +68,7 @@ CREATE TABLE IF NOT EXISTS server_operations (
 	id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 	type TEXT NOT NULL,
 	payload JSONB NOT NULL DEFAULT '{}'::jsonb,
-	status TEXT NOT NULL,
+	status TEXT NOT NULL CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED', 'EXECUTED', 'FAILED')),
 	requested_by UUID NOT NULL REFERENCES users (id),
 	approved_by UUID REFERENCES users (id),
 	created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
