@@ -1,16 +1,16 @@
-package cz.fit.tsm.faces;
+package cz.fit.tsm.faces.common;
 
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 import jakarta.faces.context.FacesContext;
 
-final class Messages {
+public final class Messages {
 
 	private Messages() {
 	}
 
-	static String get(String key) {
+	public static String get(String key) {
 		FacesContext context = FacesContext.getCurrentInstance();
 		ResourceBundle bundle = context.getApplication().getResourceBundle(context, "msg");
 		try {

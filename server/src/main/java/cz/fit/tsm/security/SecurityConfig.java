@@ -40,9 +40,18 @@ public class SecurityConfig {
 						.requestMatchers("/forbidden", "/forbidden.xhtml").authenticated()
 						.requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
 						.requestMatchers(HttpMethod.GET, "/", "/index", "/index.xhtml").permitAll()
-						.requestMatchers(path("/api/teacher/**"), path("/teacher/**")).hasRole("TEACHER")
-						.requestMatchers(path("/api/admin/**"), path("/admin/**")).hasRole("ADMIN")
-						.requestMatchers(path("/api/student/**"), path("/student/**")).hasRole("STUDENT")
+						.requestMatchers(
+								path("/api/teacher"), path("/api/teacher/**"),
+								path("/teacher"), path("/teacher/**"))
+						.hasRole("TEACHER")
+						.requestMatchers(
+								path("/api/admin"), path("/api/admin/**"),
+								path("/admin"), path("/admin/**"))
+						.hasRole("ADMIN")
+						.requestMatchers(
+								path("/api/student"), path("/api/student/**"),
+								path("/student"), path("/student/**"))
+						.hasRole("STUDENT")
 						.anyRequest().authenticated())
 				.exceptionHandling(ex -> ex
 						.authenticationEntryPoint((req, res, e) -> {

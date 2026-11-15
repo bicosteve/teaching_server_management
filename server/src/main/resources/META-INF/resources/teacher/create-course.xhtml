@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="jakarta.faces.html"
+	xmlns:f="jakarta.faces.core"
+	xmlns:p="http://primefaces.org/ui">
+<h:head>
+	<title>#{msg['teacher.course.createPageTitle']}</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1"/>
+	<link rel="stylesheet" href="/webjars/primeflex/4.0.0/primeflex.min.css"/>
+</h:head>
+<h:body>
+	<div class="p-3">
+		<p:toolbar styleClass="mb-4">
+			<f:facet name="left">
+				<span class="font-bold text-xl">#{msg['app.name']}</span>
+			</f:facet>
+			<f:facet name="right">
+				<div class="flex align-items-center gap-2">
+					<span class="text-color-secondary">#{homeBean.displayName()}</span>
+					<p:tag value="#{homeBean.roleLabel()}" severity="info"/>
+					<p:button value="#{msg['home.home']}" outcome="/teacher/index" icon="pi pi-home"
+						styleClass="ui-button-outlined"/>
+					<h:form>
+						<p:commandButton value="#{msg['home.signOut']}"
+							action="#{homeBean.logout}"
+							icon="pi pi-sign-out"
+							styleClass="ui-button-outlined"
+							process="@this"/>
+					</h:form>
+				</div>
+			</f:facet>
+		</p:toolbar>
+
+		<div class="flex justify-content-center">
+			<p:card styleClass="w-full md:w-30rem">
+				<f:facet name="title">#{msg['teacher.course.createTitle']}</f:facet>
+				<f:facet name="subtitle">#{msg['teacher.course.createSubtitle']}</f:facet>
+
+				<h:form id="courseForm" styleClass="ui-fluid">
+					<p:messages id="courseMessages" showDetail="false" closable="true"/>
+
+					<div class="field">
+						<p:outputLabel for="courseName" value="#{msg['teacher.course.name']}"/>
+						<p:inputText id="courseName"
+							value="#{teacherCourseBean.name}"
+							required="true"
+							requiredMessage="#{msg['teacher.course.name.required']}"
+							maxlength="200"/>
+					</div>
+
+					<div class="field">
+						<p:outputLabel for="courseDescription" value="#{msg['teacher.course.description']}"/>
+						<p:inputTextarea id="courseDescription"
+							value="#{teacherCourseBean.description}"
+							rows="4"
+							autoResize="false"
+							maxlength="2000"
+							style="resize: none; width: 100%; max-width: 100%; box-sizing: border-box;"/>
+					</div>
+
+					<div class="field">
+						<p:outputLabel for="academicYear" value="#{msg['teacher.course.academicYear']}"/>
+						<p:selectOneMenu id="academicYear"
+							value="#{teacherCourseBean.academicYear}"
+							required="true"
+							requiredMessage="#{msg['teacher.course.academicYear.required']}">
+							<f:selectItems value="#{teacherCourseBean.academicYearOptions}"/>
+						</p:selectOneMenu>
+					</div>
+
+					<div class="flex gap-2">
+						<p:commandButton id="createCourseButton"
+							value="#{msg['teacher.course.submit']}"
+							icon="pi pi-plus"
+							action="#{teacherCourseBean.createCourse}"
+							update="courseMessages"
+							process="@form"/>
+						<p:button value="#{msg['teacher.course.cancel']}"
+							outcome="/teacher/index"
+							styleClass="ui-button-outlined"/>
+					</div>
+				</h:form>
+			</p:card>
+		</div>
+	</div>
+</h:body>
+</html>

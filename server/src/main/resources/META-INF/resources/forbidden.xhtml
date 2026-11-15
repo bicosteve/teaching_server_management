@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="jakarta.faces.html"
+	xmlns:f="jakarta.faces.core"
+	xmlns:p="http://primefaces.org/ui">
+<h:head>
+	<title>#{msg['forbidden.title']}</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1"/>
+	<link rel="stylesheet" href="/webjars/primeflex/4.0.0/primeflex.min.css"/>
+</h:head>
+<h:body>
+	<div class="flex align-items-center justify-content-center min-h-screen p-3">
+		<p:card styleClass="w-full md:w-25rem">
+			<f:facet name="title">#{msg['forbidden.heading']}</f:facet>
+			<f:facet name="subtitle">#{msg['forbidden.subtitle']}</f:facet>
+			<p class="m-0 text-color-secondary mb-3">#{msg['forbidden.description']}</p>
+			<p:button value="#{msg['home.home']}" outcome="#{homeBean.homePage()}" icon="pi pi-home"/>
+		</p:card>
+	</div>
+</h:body>
+</html>

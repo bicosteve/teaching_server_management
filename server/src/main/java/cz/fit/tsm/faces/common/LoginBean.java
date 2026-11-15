@@ -1,4 +1,4 @@
-package cz.fit.tsm.faces;
+package cz.fit.tsm.faces.common;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
@@ -6,6 +6,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import cz.fit.tsm.dto.AuthResponse;
 import cz.fit.tsm.dto.LoginRequest;
+import cz.fit.tsm.security.JwtAuthenticationFilter;
+import cz.fit.tsm.security.RoleHomes;
 import cz.fit.tsm.service.AuthService;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
@@ -29,9 +31,9 @@ public class LoginBean {
 		try {
 			AuthResponse response = authService.login(new LoginRequest(usernameOrEmail, password));
 			var session = FacesContext.getCurrentInstance().getExternalContext().getSessionMap();
-			session.put("accessToken", response.accessToken());
+			session.put(JwtAuthenticationFilter.ACCESS_TOKEN_SESSION_KEY, response.accessToken());
 			session.put("currentUser", response.user());
-			return "/index.xhtml?faces-redirect=true";
+			return RoleHomes.facesRedirect(response.user().role());
 		}
 		catch (ResponseStatusException ex) {
 			String detail = ex.getReason() != null ? ex.getReason() : Messages.get("login.failed");
