@@ -5,6 +5,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import cz.fit.tsm.dto.AuthResponse;
@@ -15,6 +16,7 @@ import cz.fit.tsm.service.AuthService;
 import jakarta.validation.Valid;
 
 @RestController
+@RequestMapping("/api/auth")
 public class AuthController {
 
 	private final AuthService authService;
@@ -23,12 +25,12 @@ public class AuthController {
 		this.authService = authService;
 	}
 
-	@PostMapping(path = "/api/auth/login", consumes = MediaType.APPLICATION_JSON_VALUE)
+	@PostMapping(path = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
 	public AuthResponse login(@Valid @RequestBody LoginRequest request) {
 		return authService.login(request);
 	}
 
-	@GetMapping("/api/auth/me")
+	@GetMapping("/me")
 	public UserResponse me(@AuthenticationPrincipal UserPrincipal principal) {
 		return authService.currentUser(principal.getUsername());
 	}
