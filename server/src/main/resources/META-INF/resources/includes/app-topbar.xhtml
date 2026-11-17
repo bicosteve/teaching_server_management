@@ -1,0 +1,20 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="jakarta.faces.facelets"
+	xmlns:p="http://primefaces.org/ui">
+	<header class="flex align-items-center justify-content-between gap-2
+		px-3 md:px-4 py-2 border-bottom-1 surface-border surface-section">
+		<div class="flex align-items-center gap-2 surface-ground border-round px-3 py-2 min-w-0">
+			<span class="pi pi-user text-color-secondary" aria-hidden="true"></span>
+			<span class="text-sm font-normal text-color-secondary white-space-nowrap overflow-hidden text-overflow-ellipsis m-0">
+				#{homeBean.displayName()}
+			</span>
+			<p:tag value="#{homeBean.roleLabel()}" severity="info"/>
+		</div>
+		<p:commandButton value="#{msg['home.signOut']}"
+			action="#{homeBean.logout}"
+			icon="pi pi-sign-out"
+			styleClass="ui-button-outlined"
+			ajax="false"
+			process="@this"/>
+	</header>
+</ui:composition>

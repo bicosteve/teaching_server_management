@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="jakarta.faces.facelets"
+	xmlns:p="http://primefaces.org/ui">
+<ui:composition template="/templates/shell.xhtml">
+	<ui:define name="title">#{msg['forbidden.title']}</ui:define>
+	<ui:define name="nav">
+		<ui:include src="#{homeBean.navFragment}"/>
+	</ui:define>
+	<ui:define name="content">
+		<ui:include src="/includes/page-header.xhtml">
+			<ui:param name="title" value="#{msg['forbidden.heading']}"/>
+			<ui:param name="subtitle" value="#{msg['forbidden.subtitle']}"/>
+		</ui:include>
+		<p:card>
+			<p class="m-0 text-sm font-normal text-color-secondary">#{msg['forbidden.description']}</p>
+		</p:card>
+	</ui:define>
+</ui:composition>
+</html>

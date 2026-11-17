@@ -1,0 +1,9 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="jakarta.faces.facelets">
+	<div class="mb-4">
+		<div class="text-lg font-medium line-height-2 m-0">#{title}</div>
+		<ui:fragment rendered="#{not empty subtitle}">
+			<div class="text-sm font-normal text-color-secondary line-height-2 m-0 mt-1">#{subtitle}</div>
+		</ui:fragment>
+	</div>
+</ui:composition>

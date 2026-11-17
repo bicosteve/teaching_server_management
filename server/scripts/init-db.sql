@@ -20,7 +20,9 @@ CREATE TABLE IF NOT EXISTS courses (
 	name TEXT NOT NULL,
 	description TEXT,
 	academic_year TEXT NOT NULL,
-	archived_at TIMESTAMPTZ
+	status TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'SYNCED', 'FAILED')),
+	archived_at TIMESTAMPTZ,
+	UNIQUE (name, academic_year)
 );
 
 CREATE TABLE IF NOT EXISTS enrollments (
@@ -36,7 +38,8 @@ CREATE TABLE IF NOT EXISTS projects (
 	name TEXT NOT NULL,
 	description TEXT,
 	type TEXT NOT NULL,
-	deadline TIMESTAMPTZ
+	deadline TIMESTAMPTZ,
+	status TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'SYNCED', 'FAILED'))
 );
 
 CREATE TABLE IF NOT EXISTS teams (
@@ -67,13 +70,18 @@ CREATE TABLE IF NOT EXISTS server_operations (
 	id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 	type TEXT NOT NULL,
 	payload JSONB NOT NULL DEFAULT '{}'::jsonb,
-	status TEXT NOT NULL,
+	status TEXT NOT NULL CHECK (status IN ('PENDING', 'REJECTED', 'FAILED', 'COMPLETED')),
 	requested_by UUID NOT NULL REFERENCES users (id),
 	approved_by UUID REFERENCES users (id),
 	created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 	approved_at TIMESTAMPTZ,
 	executed_at TIMESTAMPTZ,
 	execution_result TEXT
+);
+
+CREATE TABLE IF NOT EXISTS server_operation_courses (
+	operation_id UUID PRIMARY KEY REFERENCES server_operations (id) ON DELETE CASCADE,
+	course_id UUID NOT NULL REFERENCES courses (id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS audit_logs (
@@ -94,4 +102,5 @@ CREATE INDEX IF NOT EXISTS idx_submissions_student_id ON submissions (student_id
 CREATE INDEX IF NOT EXISTS idx_submissions_team_id ON submissions (team_id);
 CREATE INDEX IF NOT EXISTS idx_server_operations_requested_by ON server_operations (requested_by);
 CREATE INDEX IF NOT EXISTS idx_server_operations_approved_by ON server_operations (approved_by);
+CREATE INDEX IF NOT EXISTS idx_server_operation_courses_course_id ON server_operation_courses (course_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs (user_id);

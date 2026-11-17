@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="jakarta.faces.facelets">
+<ui:composition template="/templates/shell.xhtml">
+	<ui:define name="title">#{msg['student.home.title']}</ui:define>
+	<ui:define name="nav">
+		<ui:include src="/includes/nav-student.xhtml"/>
+	</ui:define>
+	<ui:define name="content">
+		<ui:include src="/student/fragments/courses.xhtml"/>
+	</ui:define>
+</ui:composition>
+</html>

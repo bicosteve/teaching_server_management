@@ -1,0 +1,29 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="jakarta.faces.facelets"
+	xmlns:p="http://primefaces.org/ui">
+	<p:commandButton value="#{msg['nav.myCourses']}" icon="pi pi-book"
+		action="#{teacherNavBean.showCourses}" update="appNav appContent" process="@this"
+		rendered="#{!teacherNavBean.courseContext}"
+		styleClass="w-full justify-content-start #{teacherNavBean.coursesActive ? '' : 'ui-button-outlined'}"/>
+	<p:commandButton value="#{msg['nav.requests']}" icon="pi pi-inbox"
+		action="#{teacherNavBean.showRequests}" update="appNav appContent" process="@this"
+		rendered="#{!teacherNavBean.courseContext}"
+		styleClass="w-full justify-content-start #{teacherNavBean.requestsActive ? '' : 'ui-button-outlined'}"/>
+
+	<p:commandButton value="#{msg['teacher.course.back']}" icon="pi pi-arrow-left"
+		action="#{teacherNavBean.showCourses}" update="appNav appContent" process="@this"
+		rendered="#{teacherNavBean.courseContext}"
+		styleClass="w-full justify-content-start ui-button-outlined"/>
+	<p:commandButton value="#{msg['nav.manageProjects']}" icon="pi pi-folder"
+		action="#{teacherNavBean.showCourseProjects}" update="appNav appContent" process="@this"
+		rendered="#{teacherNavBean.courseContext}"
+		styleClass="w-full justify-content-start #{teacherNavBean.projectsActive ? '' : 'ui-button-outlined'}"/>
+	<p:commandButton value="#{msg['nav.manageStudents']}" icon="pi pi-users"
+		action="#{teacherNavBean.showCourseStudents}" update="appNav appContent" process="@this"
+		rendered="#{teacherNavBean.courseContext}"
+		styleClass="w-full justify-content-start #{teacherNavBean.studentsActive ? '' : 'ui-button-outlined'}"/>
+	<p:commandButton value="#{msg['nav.manageCourse']}" icon="pi pi-cog"
+		action="#{teacherNavBean.showCourseManage}" update="appNav appContent" process="@this"
+		rendered="#{teacherNavBean.courseContext}"
+		styleClass="w-full justify-content-start #{teacherNavBean.manageActive ? '' : 'ui-button-outlined'}"/>
+</ui:composition>

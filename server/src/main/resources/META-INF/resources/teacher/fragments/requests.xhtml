@@ -1,0 +1,58 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="jakarta.faces.facelets"
+	xmlns:p="http://primefaces.org/ui">
+	<ui:include src="/includes/page-header.xhtml">
+		<ui:param name="title" value="#{msg['teacher.requests.heading']}"/>
+		<ui:param name="subtitle" value="#{msg['teacher.requests.subtitle']}"/>
+	</ui:include>
+
+	<p:messages id="requestsMessages" showDetail="false" closable="true" styleClass="mb-3"/>
+	<p:card>
+		<p:dataTable id="operationsList" value="#{teacherRequestsBean.operations}" var="operation"
+			emptyMessage="#{msg['teacher.requests.empty']}" stripedRows="true" styleClass="w-full">
+			<p:column headerText="#{msg['teacher.requests.type']}">
+				<span class="text-sm font-normal">#{operation.type()}</span>
+			</p:column>
+			<p:column headerText="#{msg['teacher.requests.summary']}">
+				<span class="text-sm font-normal text-color-secondary">
+					#{empty operation.summary() ? msg['teacher.requests.noSummary'] : operation.summary()}
+				</span>
+			</p:column>
+			<p:column headerText="#{msg['teacher.requests.status']}" style="width:9rem">
+				<p:tag value="#{operation.status()}"
+					severity="#{operation.status().name() eq 'PENDING' ? 'warn'
+						: (operation.status().name() eq 'COMPLETED' ? 'success'
+						: (operation.status().name() eq 'REJECTED' ? 'danger'
+						: (operation.status().name() eq 'FAILED' ? 'danger' : 'secondary')))}"/>
+			</p:column>
+			<p:column headerText="#{msg['teacher.requests.createdAt']}" style="width:12rem">
+				<span class="text-sm font-normal text-color-secondary">#{operation.createdAt()}</span>
+			</p:column>
+			<p:column headerText="#{msg['teacher.requests.actions']}" style="width:8rem">
+				<div class="flex gap-1">
+					<p:commandButton icon="pi pi-pencil" title="#{msg['teacher.requests.edit']}"
+						ariaLabel="#{msg['teacher.requests.edit']}"
+						action="#{teacherNavBean.showEditCourse(operation.id())}"
+						update=":appShell:appNav :appShell:appContent" process="@this"
+						styleClass="ui-button-outlined ui-button-sm"
+						rendered="#{operation.editable() and operation.type().name() eq 'CREATE_COURSE'}"/>
+					<p:commandButton icon="pi pi-trash" title="#{msg['teacher.requests.remove']}"
+						ariaLabel="#{msg['teacher.requests.remove']}"
+						action="#{teacherRequestsBean.remove(operation.id())}"
+						update=":appShell:appContent" process="@this"
+						styleClass="ui-button-outlined ui-button-danger ui-button-sm"
+						rendered="#{operation.editable()}">
+						<p:confirm header="#{msg['teacher.requests.removeConfirmHeader']}"
+							message="#{msg['teacher.requests.removeConfirm']}" icon="pi pi-exclamation-triangle"/>
+					</p:commandButton>
+				</div>
+			</p:column>
+		</p:dataTable>
+	</p:card>
+	<p:confirmDialog global="true" showEffect="fade" hideEffect="fade" responsive="true">
+		<p:commandButton value="#{msg['teacher.requests.remove']}" type="button"
+			styleClass="ui-confirmdialog-yes ui-button-danger" icon="pi pi-check"/>
+		<p:commandButton value="#{msg['teacher.course.cancel']}" type="button"
+			styleClass="ui-confirmdialog-no ui-button-outlined" icon="pi pi-times"/>
+	</p:confirmDialog>
+</ui:composition>

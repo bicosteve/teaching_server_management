@@ -4,6 +4,7 @@ set -eu
 case "${MODE}" in
 	dev)
 		/workspace/scripts/seed-users.sh
+		/workspace/scripts/seed-courses.sh
 
 		mkdir -p target/classes
 		# Must live on the classpath (see spring.devtools.restart.trigger-file docs).

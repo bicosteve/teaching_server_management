@@ -1,0 +1,57 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="jakarta.faces.facelets"
+	xmlns:f="jakarta.faces.core"
+	xmlns:p="http://primefaces.org/ui">
+	<p:messages id="courseManageMessages" showDetail="false" closable="true" styleClass="mb-3"/>
+	<ui:include src="/teacher/fragments/course-context-header.xhtml">
+		<ui:param name="title" value="#{msg['nav.manageCourse']}"/>
+	</ui:include>
+
+	<p:card styleClass="w-full md:w-30rem">
+		<div class="ui-fluid">
+			<div class="field">
+				<p:outputLabel for="manageCourseName" value="#{msg['teacher.course.name']}"
+					styleClass="text-sm font-normal"/>
+				<p:inputText id="manageCourseName" value="#{teacherCourseBean.name}"
+					required="true" requiredMessage="#{msg['teacher.course.name.required']}" maxlength="200"/>
+			</div>
+			<div class="field">
+				<p:outputLabel for="manageCourseDescription" value="#{msg['teacher.course.description']}"
+					styleClass="text-sm font-normal"/>
+				<p:inputTextarea id="manageCourseDescription" value="#{teacherCourseBean.description}"
+					rows="4" autoResize="false" maxlength="2000" styleClass="w-full"/>
+			</div>
+			<div class="field">
+				<p:outputLabel for="manageAcademicYear" value="#{msg['teacher.course.academicYear']}"
+					styleClass="text-sm font-normal"/>
+				<p:selectOneMenu id="manageAcademicYear" value="#{teacherCourseBean.academicYear}"
+					required="true" requiredMessage="#{msg['teacher.course.academicYear.required']}">
+					<f:selectItems value="#{teacherCourseBean.academicYearOptions}"/>
+				</p:selectOneMenu>
+			</div>
+			<div class="flex flex-wrap gap-2">
+				<p:commandButton value="#{msg['teacher.course.save']}" icon="pi pi-check"
+					action="#{teacherCourseBean.saveManagedCourse}"
+					update=":appShell:appNav :appShell:appContent" process="@form"/>
+				<p:commandButton value="#{msg['teacher.course.cancel']}" icon="pi pi-times"
+					action="#{teacherCourseBean.cancelManage}"
+					update=":appShell:appNav :appShell:appContent" process="@this" immediate="true"
+					styleClass="ui-button-outlined"/>
+				<p:commandButton value="#{msg['teacher.course.remove']}" icon="pi pi-trash"
+					action="#{teacherCourseBean.removeManagedCourse}"
+					update=":appShell:appNav :appShell:appContent" process="@this"
+					styleClass="ui-button-danger ml-auto">
+					<p:confirm header="#{msg['teacher.course.removeConfirmHeader']}"
+						message="#{msg['teacher.course.removeConfirm']}" icon="pi pi-exclamation-triangle"/>
+				</p:commandButton>
+			</div>
+		</div>
+	</p:card>
+
+	<p:confirmDialog global="true" showEffect="fade" hideEffect="fade" responsive="true">
+		<p:commandButton value="#{msg['teacher.course.remove']}" type="button"
+			styleClass="ui-confirmdialog-yes ui-button-danger" icon="pi pi-check"/>
+		<p:commandButton value="#{msg['teacher.course.cancel']}" type="button"
+			styleClass="ui-confirmdialog-no ui-button-outlined" icon="pi pi-times"/>
+	</p:confirmDialog>
+</ui:composition>

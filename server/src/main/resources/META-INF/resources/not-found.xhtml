@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="jakarta.faces.facelets"
+	xmlns:p="http://primefaces.org/ui">
+<ui:composition template="/templates/shell.xhtml">
+	<ui:define name="title">#{msg['notFound.title']}</ui:define>
+	<ui:define name="nav">
+		<ui:fragment rendered="#{not empty homeBean.navFragment}">
+			<ui:include src="#{homeBean.navFragment}"/>
+		</ui:fragment>
+	</ui:define>
+	<ui:define name="content">
+		<ui:include src="/includes/page-header.xhtml">
+			<ui:param name="title" value="#{msg['notFound.heading']}"/>
+			<ui:param name="subtitle" value="#{msg['notFound.subtitle']}"/>
+		</ui:include>
+		<p:card>
+			<p class="m-0 mb-3 text-sm font-normal text-color-secondary">#{msg['notFound.description']}</p>
+			<p:commandButton value="#{msg['notFound.home']}" icon="pi pi-home"
+				action="#{homeBean.goHome()}"
+				update=":appShell:appNav :appShell:appContent" process="@this"/>
+		</p:card>
+	</ui:define>
+</ui:composition>
+</html>
