@@ -3,51 +3,47 @@
 	xmlns:h="jakarta.faces.html"
 	xmlns:f="jakarta.faces.core"
 	xmlns:p="http://primefaces.org/ui">
-	<div class="flex justify-content-center">
-		<p:card styleClass="w-full md:w-30rem">
-			<div class="mb-3">
-				<div class="text-lg font-medium line-height-2 m-0">
-					#{teacherCourseBean.editMode ? msg['teacher.course.editTitle'] : msg['teacher.course.createTitle']}
-				</div>
-				<div class="text-sm font-normal text-color-secondary line-height-2 m-0 mt-1">
-					#{msg['teacher.course.createSubtitle']}
-				</div>
+	<ui:include src="/includes/page-header.xhtml">
+		<ui:param name="title"
+			value="#{teacherCourseBean.editMode ? msg['teacher.course.editTitle'] : msg['teacher.course.createTitle']}"/>
+		<ui:param name="subtitle" value="#{msg['teacher.course.createSubtitle']}"/>
+	</ui:include>
+
+	<p:card styleClass="w-full md:w-30rem">
+		<div class="ui-fluid">
+			<h:inputHidden id="editId" value="#{teacherCourseBean.editId}"/>
+			<p:messages id="courseMessages" showDetail="false" closable="true"/>
+			<div class="field">
+				<p:outputLabel for="courseName" value="#{msg['teacher.course.name']}"
+					styleClass="text-sm font-normal"/>
+				<p:inputText id="courseName" value="#{teacherCourseBean.name}"
+					required="true" requiredMessage="#{msg['teacher.course.name.required']}" maxlength="200"/>
 			</div>
-			<div class="ui-fluid">
-				<h:inputHidden id="editId" value="#{teacherCourseBean.editId}"/>
-				<p:messages id="courseMessages" showDetail="false" closable="true"/>
-				<div class="field">
-					<p:outputLabel for="courseName" value="#{msg['teacher.course.name']}"
-						styleClass="text-sm font-normal"/>
-					<p:inputText id="courseName" value="#{teacherCourseBean.name}"
-						required="true" requiredMessage="#{msg['teacher.course.name.required']}" maxlength="200"/>
-				</div>
-				<div class="field">
-					<p:outputLabel for="courseDescription" value="#{msg['teacher.course.description']}"
-						styleClass="text-sm font-normal"/>
-					<p:inputTextarea id="courseDescription" value="#{teacherCourseBean.description}"
-						rows="4" autoResize="false" maxlength="2000" styleClass="w-full"/>
-				</div>
-				<div class="field">
-					<p:outputLabel for="academicYear" value="#{msg['teacher.course.academicYear']}"
-						styleClass="text-sm font-normal"/>
-					<p:selectOneMenu id="academicYear" value="#{teacherCourseBean.academicYear}"
-						required="true" requiredMessage="#{msg['teacher.course.academicYear.required']}">
-						<f:selectItems value="#{teacherCourseBean.academicYearOptions}"/>
-					</p:selectOneMenu>
-				</div>
-				<div class="flex gap-2">
-					<p:commandButton id="saveCourseButton"
-						value="#{teacherCourseBean.editMode ? msg['teacher.course.save'] : msg['teacher.course.submit']}"
-						icon="#{teacherCourseBean.editMode ? 'pi pi-check' : 'pi pi-plus'}"
-						action="#{teacherCourseBean.saveCourse}"
-						update=":appShell:appNav :appShell:appContent" process="@form"/>
-					<p:commandButton value="#{msg['teacher.course.cancel']}"
-						action="#{teacherCourseBean.cancelCourseForm}" icon="pi pi-times"
-						update=":appShell:appNav :appShell:appContent" process="@this" immediate="true"
-						styleClass="ui-button-outlined"/>
-				</div>
+			<div class="field">
+				<p:outputLabel for="courseDescription" value="#{msg['teacher.course.description']}"
+					styleClass="text-sm font-normal"/>
+				<p:inputTextarea id="courseDescription" value="#{teacherCourseBean.description}"
+					rows="4" autoResize="false" maxlength="2000" styleClass="w-full"/>
 			</div>
-		</p:card>
-	</div>
+			<div class="field">
+				<p:outputLabel for="academicYear" value="#{msg['teacher.course.academicYear']}"
+					styleClass="text-sm font-normal"/>
+				<p:selectOneMenu id="academicYear" value="#{teacherCourseBean.academicYear}"
+					required="true" requiredMessage="#{msg['teacher.course.academicYear.required']}">
+					<f:selectItems value="#{teacherCourseBean.academicYearOptions}"/>
+				</p:selectOneMenu>
+			</div>
+			<div class="flex gap-2">
+				<p:commandButton id="saveCourseButton"
+					value="#{teacherCourseBean.editMode ? msg['teacher.course.save'] : msg['teacher.course.submit']}"
+					icon="#{teacherCourseBean.editMode ? 'pi pi-check' : 'pi pi-plus'}"
+					action="#{teacherCourseBean.saveCourse}"
+					update=":appShell:appNav :appShell:appContent" process="@form"/>
+				<p:commandButton value="#{msg['teacher.course.cancel']}"
+					action="#{teacherCourseBean.cancelCourseForm}" icon="pi pi-times"
+					update=":appShell:appNav :appShell:appContent" process="@this" immediate="true"
+					styleClass="ui-button-outlined"/>
+			</div>
+		</div>
+	</p:card>
 </ui:composition>

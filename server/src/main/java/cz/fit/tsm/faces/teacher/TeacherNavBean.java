@@ -22,7 +22,10 @@ public class TeacherNavBean implements Serializable {
 	public enum View {
 		COURSES("/teacher/fragments/courses.xhtml"),
 		REQUESTS("/teacher/fragments/requests.xhtml"),
-		COURSE_FORM("/teacher/fragments/course-form.xhtml");
+		COURSE_FORM("/teacher/fragments/course-form.xhtml"),
+		COURSE_PROJECTS("/teacher/fragments/course-projects.xhtml"),
+		COURSE_STUDENTS("/teacher/fragments/course-students.xhtml"),
+		COURSE_MANAGE("/teacher/fragments/course-manage.xhtml");
 
 		private final String fragment;
 
@@ -48,12 +51,31 @@ public class TeacherNavBean implements Serializable {
 		return view.fragment();
 	}
 
+	public boolean isCourseContext() {
+		return courses.getSelectedCourse() != null
+				&& (view == View.COURSE_PROJECTS
+						|| view == View.COURSE_STUDENTS
+						|| view == View.COURSE_MANAGE);
+	}
+
 	public boolean isCoursesActive() {
 		return view == View.COURSES || (view == View.COURSE_FORM && !courses.isEditMode());
 	}
 
 	public boolean isRequestsActive() {
 		return view == View.REQUESTS || (view == View.COURSE_FORM && courses.isEditMode());
+	}
+
+	public boolean isProjectsActive() {
+		return view == View.COURSE_PROJECTS;
+	}
+
+	public boolean isStudentsActive() {
+		return view == View.COURSE_STUDENTS;
+	}
+
+	public boolean isManageActive() {
+		return view == View.COURSE_MANAGE;
 	}
 
 	public String showCourses() {
@@ -71,6 +93,30 @@ public class TeacherNavBean implements Serializable {
 	public void showCreateCourse() {
 		courses.prepareCreate();
 		view = View.COURSE_FORM;
+	}
+
+	public void showCourse(UUID courseId) {
+		if (courses.selectCourse(courseId)) {
+			view = View.COURSE_PROJECTS;
+		}
+	}
+
+	public void showCourseProjects() {
+		if (courses.getSelectedCourse() != null) {
+			view = View.COURSE_PROJECTS;
+		}
+	}
+
+	public void showCourseStudents() {
+		if (courses.getSelectedCourse() != null) {
+			view = View.COURSE_STUDENTS;
+		}
+	}
+
+	public void showCourseManage() {
+		if (courses.prepareManage()) {
+			view = View.COURSE_MANAGE;
+		}
 	}
 
 	public void showEditCourse(UUID operationId) {

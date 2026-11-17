@@ -18,6 +18,7 @@ import cz.fit.tsm.dto.CreateCourseRequest;
 import cz.fit.tsm.dto.UserResponse;
 import cz.fit.tsm.faces.common.HomeBean;
 import cz.fit.tsm.faces.common.Messages;
+import cz.fit.tsm.model.CourseStatus;
 import cz.fit.tsm.model.ServerOperationStatus;
 import cz.fit.tsm.service.CourseService;
 import jakarta.inject.Named;
@@ -38,6 +39,7 @@ public class TeacherCourseBean implements Serializable {
 	private String name;
 	private String description;
 	private String academicYear;
+	private CourseResponse selectedCourse;
 	private List<CourseResponse> courses = Collections.emptyList();
 
 	public TeacherCourseBean(CourseService courseService, HomeBean homeBean, @Lazy TeacherNavBean nav) {
@@ -51,6 +53,25 @@ public class TeacherCourseBean implements Serializable {
 	public void reloadCourses() {
 		UserResponse user = homeBean.getCurrentUser();
 		courses = user == null ? List.of() : courseService.listCourses(user.id());
+		selectedCourse = null;
+	}
+
+	public boolean selectCourse(UUID courseId) {
+		UserResponse user = homeBean.getCurrentUser();
+		if (user == null) {
+			Messages.errorKey("teacher.course.forbidden");
+			selectedCourse = null;
+			return false;
+		}
+		try {
+			selectedCourse = courseService.getCourse(courseId, user.id());
+			return true;
+		}
+		catch (ResponseStatusException ex) {
+			Messages.error(ex.getReason() != null ? ex.getReason() : Messages.get("teacher.course.notFound"));
+			selectedCourse = null;
+			return false;
+		}
 	}
 
 	public void prepareCreate() {
@@ -59,6 +80,78 @@ public class TeacherCourseBean implements Serializable {
 		description = null;
 		List<String> years = getAcademicYearOptions();
 		academicYear = years.isEmpty() ? null : years.get(0);
+	}
+
+	public boolean prepareManage() {
+		if (selectedCourse == null) {
+			Messages.errorKey("teacher.course.notFound");
+			return false;
+		}
+		UserResponse user = homeBean.getCurrentUser();
+		if (user == null) {
+			Messages.errorKey("teacher.course.forbidden");
+			return false;
+		}
+		try {
+			selectedCourse = courseService.getCourse(selectedCourse.id(), user.id());
+			editId = null;
+			name = selectedCourse.name();
+			description = selectedCourse.description();
+			academicYear = selectedCourse.academicYear();
+			return true;
+		}
+		catch (ResponseStatusException ex) {
+			Messages.error(ex.getReason() != null ? ex.getReason() : Messages.get("teacher.course.notFound"));
+			selectedCourse = null;
+			return false;
+		}
+	}
+
+	public void saveManagedCourse() {
+		UserResponse user = homeBean.getCurrentUser();
+		if (user == null || selectedCourse == null) {
+			Messages.errorKey("teacher.course.forbidden");
+			return;
+		}
+		try {
+			selectedCourse = courseService.updateCourse(
+					selectedCourse.id(),
+					user.id(),
+					new CreateCourseRequest(name, description, academicYear));
+			name = selectedCourse.name();
+			description = selectedCourse.description();
+			academicYear = selectedCourse.academicYear();
+			Messages.infoKey("teacher.course.manageSaved");
+		}
+		catch (ResponseStatusException ex) {
+			Messages.error(ex.getReason() != null ? ex.getReason() : Messages.get("teacher.course.manageSaveFailed"));
+		}
+	}
+
+	public void removeManagedCourse() {
+		UserResponse user = homeBean.getCurrentUser();
+		if (user == null || selectedCourse == null) {
+			Messages.errorKey("teacher.course.forbidden");
+			return;
+		}
+		try {
+			boolean pending = selectedCourse.status() == CourseStatus.PENDING;
+			courseService.removeCourse(selectedCourse.id(), user.id());
+			if (pending) {
+				prepareCreate();
+				nav.showCourses();
+				return;
+			}
+			selectedCourse = courseService.getCourse(selectedCourse.id(), user.id());
+			Messages.infoKey("teacher.course.manageRemoveRequested");
+		}
+		catch (ResponseStatusException ex) {
+			Messages.error(ex.getReason() != null ? ex.getReason() : Messages.get("teacher.course.manageRemoveFailed"));
+		}
+	}
+
+	public void cancelManage() {
+		nav.showCourseProjects();
 	}
 
 	public void prepareEdit(UUID operationId) {
@@ -135,6 +228,10 @@ public class TeacherCourseBean implements Serializable {
 
 	public List<CourseResponse> getCourses() {
 		return courses;
+	}
+
+	public CourseResponse getSelectedCourse() {
+		return selectedCourse;
 	}
 
 	public String getName() {

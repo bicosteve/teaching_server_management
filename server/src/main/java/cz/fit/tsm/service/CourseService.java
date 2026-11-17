@@ -3,6 +3,7 @@ package cz.fit.tsm.service;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -74,6 +75,69 @@ public class CourseService {
 	}
 
 	@Transactional(readOnly = true)
+	public CourseResponse getCourse(UUID courseId, UUID teacherId) {
+		return CourseResponse.from(requireOwnedCourse(courseId, teacherId));
+	}
+
+	@Transactional
+	public CourseResponse updateCourse(UUID courseId, UUID teacherId, CreateCourseRequest request) {
+		Course course = requireOwnedCourse(courseId, teacherId);
+		String name = request.name().trim();
+		String academicYear = request.academicYear().trim();
+		String description = trimToNull(request.description());
+
+		if (courseRepository.existsByNameAndAcademicYearAndIdNot(name, academicYear, course.getId())) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "A course with this name and academic year already exists");
+		}
+
+		course.updateDetails(name, description, academicYear);
+		Map<String, Object> payload = coursePayload(name, description, academicYear);
+
+		Optional<ServerOperation> pendingCreate = findPendingCreateCourseOp(courseId, teacherId);
+		if (pendingCreate.isPresent()) {
+			ServerOperation operation = pendingCreate.get();
+			operation.replacePayload(payload);
+			operation.markPending();
+			serverOperationRepository.save(operation);
+		}
+		else {
+			course.markPending();
+			ServerOperation operation = serverOperationRepository.save(new ServerOperation(
+					ServerOperationType.UPDATE_COURSE,
+					payload,
+					ServerOperationStatus.PENDING,
+					teacherId));
+			serverOperationCourseRepository.save(new ServerOperationCourse(operation.getId(), course.getId()));
+		}
+
+		return CourseResponse.from(courseRepository.save(course));
+	}
+
+	@Transactional
+	public void removeCourse(UUID courseId, UUID teacherId) {
+		Course course = requireOwnedCourse(courseId, teacherId);
+
+		if (course.isPending()) {
+			Optional<ServerOperation> editableCreate = findCreateCourseOp(courseId, teacherId)
+					.filter(op -> !op.isCompleted());
+			if (editableCreate.isPresent()) {
+				serverOperationService.delete(editableCreate.get().getId(), teacherId);
+				return;
+			}
+			courseRepository.delete(course);
+			return;
+		}
+
+		Map<String, Object> payload = coursePayload(course.getName(), course.getDescription(), course.getAcademicYear());
+		ServerOperation operation = serverOperationRepository.save(new ServerOperation(
+				ServerOperationType.DELETE_COURSE,
+				payload,
+				ServerOperationStatus.PENDING,
+				teacherId));
+		serverOperationCourseRepository.save(new ServerOperationCourse(operation.getId(), course.getId()));
+	}
+
+	@Transactional(readOnly = true)
 	public CourseRequestResponse getCourseRequest(UUID operationId, UUID teacherId) {
 		ServerOperation operation = serverOperationService.requireOwned(operationId, teacherId);
 		assertCreateCourse(operation);
@@ -104,12 +168,38 @@ public class CourseService {
 		return CourseRequestResponse.from(operation, course);
 	}
 
+	private Course requireOwnedCourse(UUID courseId, UUID teacherId) {
+		return courseRepository.findByIdAndTeacherId(courseId, teacherId)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found"));
+	}
+
 	private Course requireLinkedCourse(UUID operationId, UUID teacherId) {
 		UUID courseId = serverOperationCourseRepository.findByOperationId(operationId)
 				.map(ServerOperationCourse::getCourseId)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Linked course not found"));
-		return courseRepository.findByIdAndTeacherId(courseId, teacherId)
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Linked course not found"));
+		return requireOwnedCourse(courseId, teacherId);
+	}
+
+	private Optional<ServerOperation> findPendingCreateCourseOp(UUID courseId, UUID teacherId) {
+		return linkedOperations(courseId, teacherId).stream()
+				.filter(op -> op.getType() == ServerOperationType.CREATE_COURSE)
+				.filter(op -> op.getStatus() == ServerOperationStatus.PENDING)
+				.findFirst();
+	}
+
+	private Optional<ServerOperation> findCreateCourseOp(UUID courseId, UUID teacherId) {
+		return linkedOperations(courseId, teacherId).stream()
+				.filter(op -> op.getType() == ServerOperationType.CREATE_COURSE)
+				.findFirst();
+	}
+
+	private List<ServerOperation> linkedOperations(UUID courseId, UUID teacherId) {
+		return serverOperationCourseRepository.findAllByCourseId(courseId).stream()
+				.map(ServerOperationCourse::getOperationId)
+				.map(serverOperationRepository::findById)
+				.flatMap(Optional::stream)
+				.filter(op -> teacherId.equals(op.getRequestedBy()))
+				.toList();
 	}
 
 	private static void assertCreateCourse(ServerOperation operation) {

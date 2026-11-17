@@ -2,12 +2,15 @@ package cz.fit.tsm.faces.common;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
 import cz.fit.tsm.dto.UserResponse;
+import cz.fit.tsm.faces.teacher.TeacherNavBean;
+import cz.fit.tsm.model.UserRole;
 import cz.fit.tsm.security.RoleHomes;
 import cz.fit.tsm.security.UserPrincipal;
 import jakarta.faces.context.FacesContext;
@@ -19,6 +22,12 @@ import jakarta.inject.Named;
 public class HomeBean {
 
 	private static final Logger log = LoggerFactory.getLogger(HomeBean.class);
+
+	private final TeacherNavBean teacherNav;
+
+	public HomeBean(@Lazy TeacherNavBean teacherNav) {
+		this.teacherNav = teacherNav;
+	}
 
 	public UserResponse getCurrentUser() {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -33,6 +42,17 @@ public class HomeBean {
 		SecurityContextHolder.clearContext();
 		FacesContext.getCurrentInstance().getExternalContext().invalidateSession();
 		return "/login.xhtml?faces-redirect=true";
+	}
+
+	public String goHome() {
+		UserResponse user = getCurrentUser();
+		if (user == null) {
+			return "/login.xhtml?faces-redirect=true";
+		}
+		if (user.role() == UserRole.TEACHER) {
+			return teacherNav.showCourses();
+		}
+		return RoleHomes.facesRedirect(user.role());
 	}
 
 	public String homePage() {

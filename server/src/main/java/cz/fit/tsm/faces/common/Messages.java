@@ -30,4 +30,13 @@ public final class Messages {
 	public static void errorKey(String key) {
 		error(get(key));
 	}
+
+	public static void info(String detail) {
+		FacesContext.getCurrentInstance().addMessage(null,
+				new FacesMessage(FacesMessage.SEVERITY_INFO, detail, null));
+	}
+
+	public static void infoKey(String key) {
+		info(get(key));
+	}
 }

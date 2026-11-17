@@ -1,9 +1,11 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
 	xmlns:ui="jakarta.faces.facelets"
 	xmlns:p="http://primefaces.org/ui">
+	<ui:include src="/includes/page-header.xhtml">
+		<ui:param name="title" value="#{msg['student.home.welcome']}"/>
+		<ui:param name="subtitle" value="#{msg['student.home.subtitle']}"/>
+	</ui:include>
 	<p:card>
-		<div class="text-lg font-medium line-height-2 m-0">#{msg['student.home.welcome']}</div>
-		<div class="text-sm font-normal text-color-secondary line-height-2 m-0 mt-1">#{msg['student.home.subtitle']}</div>
-		<p class="m-0 mt-3 text-sm font-normal text-color-secondary line-height-3">#{msg['student.home.description']}</p>
+		<p class="m-0 text-sm font-normal text-color-secondary">#{msg['student.home.description']}</p>
 	</p:card>
 </ui:composition>
