@@ -3,6 +3,8 @@ package cz.fit.tsm.service;
 import java.util.List;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +20,8 @@ import cz.fit.tsm.repository.ServerOperationRepository;
 
 @Service
 public class ServerOperationService {
+
+	private static final Logger log = LoggerFactory.getLogger(ServerOperationService.class);
 
 	private final ServerOperationRepository serverOperationRepository;
 	private final ServerOperationCourseRepository serverOperationCourseRepository;
@@ -55,6 +59,8 @@ public class ServerOperationService {
 				.orElse(null);
 
 		if (linkedCourse != null && linkedCourse.isSynced()) {
+			log.warn("delete: blocked synced course={} op={} requester={}",
+					linkedCourse.getId(), operationId, requesterId);
 			throw new ResponseStatusException(HttpStatus.CONFLICT,
 					"Cannot remove a request for a synced course");
 		}
@@ -62,6 +68,11 @@ public class ServerOperationService {
 		serverOperationRepository.delete(operation);
 		if (linkedCourse != null) {
 			courseRepository.delete(linkedCourse);
+			log.info("delete: removed op={} and course={} requester={}",
+					operationId, linkedCourse.getId(), requesterId);
+		}
+		else {
+			log.info("delete: removed op={} requester={}", operationId, requesterId);
 		}
 	}
 

@@ -34,6 +34,7 @@ public class SecurityConfig {
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
 				.authorizeHttpRequests(auth -> auth
 						.requestMatchers("/jakarta.faces.resource/**", "/webjars/**", "/login", "/login.xhtml").permitAll()
+						.requestMatchers("/not-found", "/not-found.xhtml", "/error").permitAll()
 						.requestMatchers("/forbidden", "/forbidden.xhtml").authenticated()
 						.requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/refresh").permitAll()
 						.requestMatchers(HttpMethod.GET, "/", "/index", "/index.xhtml").permitAll()

@@ -37,6 +37,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
       JWT_REFRESH_EXPIRATION_MS: ${JWT_REFRESH_EXPIRATION_MS}
+      LOG_LEVEL: ${LOG_LEVEL}
     volumes:
       - ./server/src:/workspace/src
       - ./server/pom.xml:/workspace/pom.xml

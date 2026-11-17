@@ -2,6 +2,8 @@ package cz.fit.tsm.security;
 
 import java.io.IOException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,6 +25,8 @@ import jakarta.servlet.http.HttpServletResponse;
  */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+	private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
 	private final JwtService jwtService;
 	private final CustomUserDetailsService userDetailsService;
@@ -54,9 +58,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			if (jwtService.isAccessTokenValid(accessToken, user.getUsername()) && user.isEnabled()) {
 				SecurityContextHolder.getContext().setAuthentication(
 						new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities()));
+				log.debug("bearer: authenticated user={}", username);
+			}
+			else {
+				log.warn("bearer: rejected token for user={}", username);
+				SecurityContextHolder.clearContext();
 			}
 		}
-		catch (Exception ignored) {
+		catch (Exception ex) {
+			log.warn("bearer: invalid access token ({})", ex.getClass().getSimpleName());
 			SecurityContextHolder.clearContext();
 		}
 	}

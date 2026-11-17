@@ -57,8 +57,8 @@ public class LoginBean {
 			return RoleHomes.facesRedirect(alreadyLoggedIn.getRole());
 		}
 		try {
-			log.info("login: establishing session");
 			User user = authService.authenticate(new LoginRequest(usernameOrEmail, password));
+			log.info("login: establishing session user={} role={}", user.getUsername(), user.getRole());
 			UserPrincipal principal = new UserPrincipal(user);
 			UsernamePasswordAuthenticationToken authentication =
 					new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
@@ -76,7 +76,7 @@ public class LoginBean {
 			return RoleHomes.facesRedirect(user.getRole());
 		}
 		catch (ResponseStatusException ex) {
-			log.info("login: failed");
+			log.warn("login: failed status={} reason={}", ex.getStatusCode().value(), ex.getReason());
 			String detail = ex.getReason() != null ? ex.getReason() : Messages.get("login.failed");
 			FacesContext.getCurrentInstance().addMessage(null,
 					new FacesMessage(FacesMessage.SEVERITY_ERROR, detail, null));

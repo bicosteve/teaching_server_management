@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +28,8 @@ import cz.fit.tsm.repository.ServerOperationRepository;
 
 @Service
 public class CourseService {
+
+	private static final Logger log = LoggerFactory.getLogger(CourseService.class);
 
 	private final CourseRepository courseRepository;
 	private final ServerOperationRepository serverOperationRepository;
@@ -48,6 +52,7 @@ public class CourseService {
 		String description = trimToNull(request.description());
 
 		if (courseRepository.existsByNameAndAcademicYear(name, academicYear)) {
+			log.warn("requestCourse: conflict name={} year={} teacher={}", name, academicYear, teacherId);
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "A course with this name and academic year already exists");
 		}
 
@@ -64,6 +69,7 @@ public class CourseService {
 				ServerOperationStatus.PENDING,
 				teacherId));
 		serverOperationCourseRepository.save(new ServerOperationCourse(operation.getId(), course.getId()));
+		log.info("requestCourse: created course={} op={} teacher={}", course.getId(), operation.getId(), teacherId);
 		return CourseResponse.from(course);
 	}
 
@@ -99,6 +105,8 @@ public class CourseService {
 			operation.replacePayload(payload);
 			operation.markPending();
 			serverOperationRepository.save(operation);
+			log.info("updateCourse: patched pending create op={} course={} teacher={}",
+					operation.getId(), courseId, teacherId);
 		}
 		else {
 			course.markPending();
@@ -108,6 +116,8 @@ public class CourseService {
 					ServerOperationStatus.PENDING,
 					teacherId));
 			serverOperationCourseRepository.save(new ServerOperationCourse(operation.getId(), course.getId()));
+			log.info("updateCourse: enqueued UPDATE_COURSE op={} course={} teacher={}",
+					operation.getId(), courseId, teacherId);
 		}
 
 		return CourseResponse.from(courseRepository.save(course));
@@ -121,9 +131,12 @@ public class CourseService {
 			Optional<ServerOperation> editableCreate = findCreateCourseOp(courseId, teacherId)
 					.filter(op -> !op.isCompleted());
 			if (editableCreate.isPresent()) {
+				log.info("removeCourse: hard-delete pending course={} op={} teacher={}",
+						courseId, editableCreate.get().getId(), teacherId);
 				serverOperationService.delete(editableCreate.get().getId(), teacherId);
 				return;
 			}
+			log.info("removeCourse: hard-delete orphan pending course={} teacher={}", courseId, teacherId);
 			courseRepository.delete(course);
 			return;
 		}
@@ -135,6 +148,8 @@ public class CourseService {
 				ServerOperationStatus.PENDING,
 				teacherId));
 		serverOperationCourseRepository.save(new ServerOperationCourse(operation.getId(), course.getId()));
+		log.info("removeCourse: enqueued DELETE_COURSE op={} course={} teacher={}",
+				operation.getId(), courseId, teacherId);
 	}
 
 	@Transactional(readOnly = true)
@@ -165,6 +180,7 @@ public class CourseService {
 		operation.markPending();
 		courseRepository.save(course);
 		serverOperationRepository.save(operation);
+		log.info("updateCourseRequest: op={} course={} teacher={}", operationId, course.getId(), teacherId);
 		return CourseRequestResponse.from(operation, course);
 	}
 
