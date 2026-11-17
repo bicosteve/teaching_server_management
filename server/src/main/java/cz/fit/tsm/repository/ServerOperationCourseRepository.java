@@ -1,5 +1,6 @@
 package cz.fit.tsm.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -11,6 +12,8 @@ import cz.fit.tsm.model.ServerOperationCourse;
 public interface ServerOperationCourseRepository extends JpaRepository<ServerOperationCourse, UUID> {
 
 	Optional<ServerOperationCourse> findByOperationId(UUID operationId);
+
+	List<ServerOperationCourse> findAllByOperationIdIn(Collection<UUID> operationIds);
 
 	List<ServerOperationCourse> findAllByCourseId(UUID courseId);
 }

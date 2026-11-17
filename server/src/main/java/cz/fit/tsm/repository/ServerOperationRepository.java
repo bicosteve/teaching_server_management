@@ -11,6 +11,8 @@ import cz.fit.tsm.model.ServerOperationType;
 
 public interface ServerOperationRepository extends JpaRepository<ServerOperation, UUID> {
 
+	List<ServerOperation> findAllByOrderByCreatedAtDesc();
+
 	List<ServerOperation> findByRequestedByAndTypeOrderByCreatedAtDesc(UUID requestedBy, ServerOperationType type);
 
 	List<ServerOperation> findByRequestedByOrderByCreatedAtDesc(UUID requestedBy);

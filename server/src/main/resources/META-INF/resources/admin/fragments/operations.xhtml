@@ -1,11 +1,88 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
 	xmlns:ui="jakarta.faces.facelets"
+	xmlns:h="jakarta.faces.html"
 	xmlns:p="http://primefaces.org/ui">
 	<ui:include src="/includes/page-header.xhtml">
-		<ui:param name="title" value="#{msg['admin.home.welcome']}"/>
-		<ui:param name="subtitle" value="#{msg['admin.home.subtitle']}"/>
+		<ui:param name="title" value="#{msg['admin.operations.heading']}"/>
+		<ui:param name="subtitle" value="#{msg['admin.operations.subtitle']}"/>
 	</ui:include>
+
 	<p:card>
-		<p class="m-0 text-sm font-normal text-color-secondary">#{msg['admin.home.description']}</p>
+		<p:dataTable id="operationsList" value="#{adminOperationsBean.operations}" var="operation"
+			emptyMessage="#{msg['admin.operations.empty']}" stripedRows="true"
+			styleClass="w-full" tableStyle="width:100%; table-layout:fixed"
+			selectionMode="single" selection="#{adminOperationsBean.selected}"
+			rowKey="#{operation.id()}" rowSelectMode="new">
+			<p:ajax event="rowSelect" listener="#{adminOperationsBean.onRowSelect}"
+				update=":appShell:operationDetailDialog" process="@this"
+				oncomplete="PF('operationDetailDialog').show()"/>
+			<p:column headerText="#{msg['admin.operations.type']}" style="width:18%">
+				<span class="block overflow-hidden white-space-nowrap text-overflow-ellipsis text-sm font-normal"
+					title="#{operation.type()}">#{operation.type()}</span>
+			</p:column>
+			<p:column headerText="#{msg['admin.operations.target']}" style="width:30%">
+				<span class="block overflow-hidden white-space-nowrap text-overflow-ellipsis text-sm font-normal text-color-secondary"
+					title="#{operation.target()}">
+					#{empty operation.target() ? msg['admin.operations.noTarget'] : operation.target()}
+				</span>
+			</p:column>
+			<p:column headerText="#{msg['admin.operations.requestedBy']}" style="width:18%">
+				<span class="block overflow-hidden white-space-nowrap text-overflow-ellipsis text-sm font-normal text-color-secondary"
+					title="#{operation.requestedByName()}">
+					#{empty operation.requestedByName() ? msg['admin.operations.noTarget'] : operation.requestedByName()}
+				</span>
+			</p:column>
+			<p:column headerText="#{msg['admin.operations.status']}" style="width:12%">
+				<p:tag value="#{operation.status()}" severity="#{operation.statusSeverity()}"/>
+			</p:column>
+			<p:column headerText="#{msg['admin.operations.createdAt']}" style="width:22%">
+				<span class="block overflow-hidden white-space-nowrap text-overflow-ellipsis text-sm font-normal text-color-secondary"
+					title="#{operation.createdAt()}">#{operation.createdAt()}</span>
+			</p:column>
+		</p:dataTable>
 	</p:card>
+
+	<p:dialog id="operationDetailDialog" widgetVar="operationDetailDialog"
+		header="#{msg['admin.operations.detailTitle']}" modal="true" appendTo="@(body)"
+		draggable="false" resizable="false" closable="true" closeOnEscape="true"
+		blockScroll="true" width="560" position="center"
+		contentStyle="height:auto; max-height:min(70vh, calc(100vh - 8rem)); overflow-y:auto"
+		onShow="var d=PF('operationDetailDialog'); d.content.css({height:'auto','max-height':'min(70vh, calc(100vh - 8rem))','overflow-y':'auto'}); d.initPosition();">
+		<h:panelGroup layout="block" styleClass="flex flex-column gap-3"
+			rendered="#{adminOperationsBean.selected ne null}">
+			<div class="flex align-items-center justify-content-between gap-2 flex-wrap">
+				<span class="text-sm font-medium">#{adminOperationsBean.selected.type()}</span>
+				<p:tag value="#{adminOperationsBean.selected.status()}"
+					severity="#{adminOperationsBean.selected.statusSeverity()}"/>
+			</div>
+
+			<ui:repeat value="#{adminOperationsBean.selected.metaFields()}" var="field">
+				<div class="flex flex-column gap-1">
+					<span class="text-xs font-medium text-color-secondary">#{msg[field.labelKey()]}</span>
+					<span class="text-sm font-normal">
+						#{empty field.value() ? msg['admin.operations.noTarget'] : field.value()}
+					</span>
+				</div>
+			</ui:repeat>
+
+			<div class="flex flex-column gap-2">
+				<span class="text-xs font-medium text-color-secondary">#{msg['admin.operations.payload']}</span>
+				<div class="surface-ground border-1 surface-border border-round overflow-hidden">
+					<ui:repeat value="#{adminOperationsBean.selected.payloadFields()}" var="field" varStatus="status">
+						<div class="flex flex-column sm:flex-row sm:align-items-start gap-1 sm:gap-3 px-3 py-2
+							#{status.first ? '' : 'border-top-1 surface-border'}">
+							<span class="text-sm font-medium text-color-secondary sm:w-10rem flex-none">#{field.label()}</span>
+							<span class="text-sm font-normal white-space-normal word-break-all">
+								#{empty field.value() ? msg['admin.operations.noTarget'] : field.value()}
+							</span>
+						</div>
+					</ui:repeat>
+					<h:panelGroup layout="block" styleClass="px-3 py-2 text-sm font-normal text-color-secondary"
+						rendered="#{empty adminOperationsBean.selected.payloadFields()}">
+						#{msg['admin.operations.noTarget']}
+					</h:panelGroup>
+				</div>
+			</div>
+		</h:panelGroup>
+	</p:dialog>
 </ui:composition>

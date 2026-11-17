@@ -3,6 +3,7 @@ package cz.fit.tsm.service;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -96,28 +97,28 @@ public class CourseService {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "A course with this name and academic year already exists");
 		}
 
+		Map<String, Object> changedFields = changedCourseFields(course, name, description, academicYear);
 		course.updateDetails(name, description, academicYear);
-		Map<String, Object> payload = coursePayload(name, description, academicYear);
 
 		Optional<ServerOperation> pendingCreate = findPendingCreateCourseOp(courseId, teacherId);
 		if (pendingCreate.isPresent()) {
 			ServerOperation operation = pendingCreate.get();
-			operation.replacePayload(payload);
+			operation.replacePayload(coursePayload(name, description, academicYear));
 			operation.markPending();
 			serverOperationRepository.save(operation);
 			log.info("updateCourse: patched pending create op={} course={} teacher={}",
 					operation.getId(), courseId, teacherId);
 		}
-		else {
+		else if (!changedFields.isEmpty()) {
 			course.markPending();
 			ServerOperation operation = serverOperationRepository.save(new ServerOperation(
 					ServerOperationType.UPDATE_COURSE,
-					payload,
+					changedFields,
 					ServerOperationStatus.PENDING,
 					teacherId));
 			serverOperationCourseRepository.save(new ServerOperationCourse(operation.getId(), course.getId()));
-			log.info("updateCourse: enqueued UPDATE_COURSE op={} course={} teacher={}",
-					operation.getId(), courseId, teacherId);
+			log.info("updateCourse: enqueued UPDATE_COURSE op={} fields={} course={} teacher={}",
+					operation.getId(), changedFields.keySet(), courseId, teacherId);
 		}
 
 		return CourseResponse.from(courseRepository.save(course));
@@ -230,6 +231,21 @@ public class CourseService {
 		payload.put("description", description);
 		payload.put("academic_year", academicYear);
 		return payload;
+	}
+
+	private static Map<String, Object> changedCourseFields(Course course, String name, String description,
+			String academicYear) {
+		Map<String, Object> payload = new LinkedHashMap<>();
+		putIfChanged(payload, "name", course.getName(), name);
+		putIfChanged(payload, "description", course.getDescription(), description);
+		putIfChanged(payload, "academic_year", course.getAcademicYear(), academicYear);
+		return payload;
+	}
+
+	private static void putIfChanged(Map<String, Object> payload, String key, Object current, Object next) {
+		if (!Objects.equals(current, next)) {
+			payload.put(key, next);
+		}
 	}
 
 	private static String trimToNull(String value) {
