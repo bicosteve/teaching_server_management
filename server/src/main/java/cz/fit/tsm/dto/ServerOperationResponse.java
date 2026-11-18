@@ -35,7 +35,10 @@ public record ServerOperationResponse(
 	public static ServerOperationResponse from(ServerOperation operation, String requestedByName,
 			String approvedByName, String linkedCourseName) {
 		Map<String, Object> payload = Map.copyOf(operation.getPayload());
-		String target = blankToNull(linkedCourseName);
+		String target = blankToNull(stringValue(payload.get("previous_name")));
+		if (target == null) {
+			target = blankToNull(linkedCourseName);
+		}
 		if (target == null) {
 			target = stringValue(payload.get("name"));
 		}
