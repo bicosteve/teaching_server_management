@@ -134,4 +134,16 @@ public class ServerOperation {
 		this.approvedBy = null;
 		this.approvedAt = null;
 	}
+
+	public void markCompleted(String executionResult) {
+		this.status = ServerOperationStatus.COMPLETED;
+		this.executedAt = Instant.now();
+		this.executionResult = executionResult;
+	}
+
+	public void markFailed(String executionResult) {
+		this.status = ServerOperationStatus.FAILED;
+		this.executedAt = Instant.now();
+		this.executionResult = executionResult;
+	}
 }

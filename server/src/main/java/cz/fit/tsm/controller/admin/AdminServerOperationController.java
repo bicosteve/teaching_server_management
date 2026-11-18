@@ -5,17 +5,22 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import cz.fit.tsm.dto.OperationExecutionFeedbackRequest;
 import cz.fit.tsm.dto.ServerOperationResponse;
 import cz.fit.tsm.model.ServerOperationStatus;
 import cz.fit.tsm.security.UserPrincipal;
 import cz.fit.tsm.service.ServerOperationService;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/admin/operations")
@@ -43,5 +48,14 @@ public class AdminServerOperationController {
 			@PathVariable UUID operationId) {
 		log.info("get: admin={} op={}", principal.getId(), operationId);
 		return serverOperationService.get(operationId);
+	}
+
+	@PostMapping(path = "/{operationId}/feedback", consumes = MediaType.APPLICATION_JSON_VALUE)
+	public ServerOperationResponse feedback(@AuthenticationPrincipal UserPrincipal principal,
+			@PathVariable UUID operationId,
+			@Valid @RequestBody OperationExecutionFeedbackRequest request) {
+		log.info("feedback: admin={} op={} success={}", principal.getId(), operationId, request.success());
+		return serverOperationService.reportExecutionFeedback(
+				operationId, request.success(), request.executionResult());
 	}
 }

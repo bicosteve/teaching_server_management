@@ -108,6 +108,25 @@ public class ServerOperationService {
 	}
 
 	@Transactional
+	public ServerOperationResponse reportExecutionFeedback(UUID operationId, boolean success, String executionResult) {
+		ServerOperation operation = require(operationId);
+		assertApproved(operation);
+		String result = blankToNull(executionResult);
+		if (success) {
+			operation.markCompleted(result);
+			applySuccessfulExecution(operation);
+		}
+		else {
+			operation.markFailed(result);
+			syncLinkedCourseStatus(operationId, CourseStatus.FAILED);
+		}
+		serverOperationRepository.save(operation);
+		log.info("reportExecutionFeedback: op={} success={} type={}",
+				operationId, success, operation.getType());
+		return get(operationId);
+	}
+
+	@Transactional
 	public void delete(UUID operationId, UUID requesterId) {
 		ServerOperation operation = requireOwned(operationId, requesterId);
 		assertEditable(operation);
@@ -150,6 +169,25 @@ public class ServerOperationService {
 		}
 	}
 
+	static void assertApproved(ServerOperation operation) {
+		if (operation.getStatus() != ServerOperationStatus.APPROVED) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "Only approved operations can receive execution feedback");
+		}
+	}
+
+	private void applySuccessfulExecution(ServerOperation operation) {
+		Course course = linkedCourse(operation.getId());
+		if (course == null) {
+			return;
+		}
+		if (operation.getType() == ServerOperationType.DELETE_COURSE) {
+			courseRepository.delete(course);
+			return;
+		}
+		course.markSynced();
+		courseRepository.save(course);
+	}
+
 	private List<ServerOperationResponse> toResponses(List<ServerOperation> operations) {
 		Map<UUID, User> users = userRepository.findAllById(userIds(operations)).stream()
 				.collect(Collectors.toMap(User::getId, Function.identity()));
@@ -174,7 +212,14 @@ public class ServerOperationService {
 		else if (status == CourseStatus.REJECTED) {
 			course.markRejected();
 		}
+		else if (status == CourseStatus.FAILED) {
+			course.markFailed();
+		}
 		courseRepository.save(course);
+	}
+
+	private static String blankToNull(String value) {
+		return value == null || value.isBlank() ? null : value.trim();
 	}
 
 	private Course linkedCourse(UUID operationId) {

@@ -108,6 +108,10 @@ public class Course {
 		this.status = CourseStatus.SYNCED;
 	}
 
+	public void markFailed() {
+		this.status = CourseStatus.FAILED;
+	}
+
 	public boolean isPending() {
 		return status == CourseStatus.PENDING;
 	}
