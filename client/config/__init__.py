@@ -8,6 +8,8 @@ import re
 DEFAULT_BASE_URL = "http://localhost:8080"
 API_TIMEOUT_SECONDS = 10.0
 APPROVED_OPERATION_STATUS = "APPROVED"
+# Matches server OperationExecutionFeedbackRequest @Size(max = 1000).
+EXECUTION_RESULT_MAX_LEN = 1000
 
 # Linux group naming.
 GROUP_NAME_MAX_LEN = 32

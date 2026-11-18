@@ -19,6 +19,20 @@ from config import (
 )
 
 
+class ShellCommandError(RuntimeError):
+	"""Raised when a local shell command fails."""
+
+	def __init__(
+		self,
+		command: list[str],
+		returncode: int,
+		stdout: str = "",
+		stderr: str = "",
+	) -> None:
+		detail = (stderr or stdout or "").strip() or f"exit {returncode}"
+		super().__init__(f"{' '.join(command)} failed: {detail}")
+
+
 def validate_group_name(group_name: str) -> None:
 	if not isinstance(group_name, str) or not group_name:
 		raise ValueError("Missing or invalid group name")
@@ -95,6 +109,7 @@ class LinuxGroupManager:
 		return result.returncode == 0
 
 	def run(self, command: list[str]) -> None:
+		reported = list(command)
 		if self.sudo_password is None:
 			argv, stdin = command, None
 		else:
@@ -109,8 +124,12 @@ class LinuxGroupManager:
 			check=False,
 		)
 		if completed.returncode != 0:
-			detail = (completed.stderr or completed.stdout or "").strip() or f"exit {completed.returncode}"
-			raise RuntimeError(f"{' '.join(argv)} failed: {detail}")
+			raise ShellCommandError(
+				reported,
+				completed.returncode,
+				stdout=completed.stdout or "",
+				stderr=completed.stderr or "",
+			)
 
 	@staticmethod
 	def result(action: str, group_name: str, message: str) -> dict:
