@@ -14,6 +14,7 @@ import cz.fit.tsm.dto.UserResponse;
 import cz.fit.tsm.faces.common.HomeBean;
 import cz.fit.tsm.faces.common.Messages;
 import cz.fit.tsm.service.ServerOperationService;
+import jakarta.faces.context.FacesContext;
 import jakarta.inject.Named;
 
 @Named
@@ -40,6 +41,14 @@ public class AdminOperationsBean implements Serializable {
 		return operations;
 	}
 
+	/** Refresh cache on full page loads; keep it for AJAX postbacks. */
+	public void onPageLoad() {
+		FacesContext faces = FacesContext.getCurrentInstance();
+		if (!faces.getPartialViewContext().isAjaxRequest()) {
+			reload();
+		}
+	}
+
 	public ServerOperationResponse getSelected() {
 		return selected;
 	}
@@ -49,6 +58,7 @@ public class AdminOperationsBean implements Serializable {
 	}
 
 	public void onRowSelect(SelectEvent<ServerOperationResponse> event) {
+		reload();
 		selected = serverOperationService.get(event.getObject().id());
 	}
 
@@ -87,8 +97,9 @@ public class AdminOperationsBean implements Serializable {
 	private void reload() {
 		operations = serverOperationService.listAll();
 		if (selected != null) {
+			UUID selectedId = selected.id();
 			selected = operations.stream()
-					.filter(op -> op.id().equals(selected.id()))
+					.filter(op -> op.id().equals(selectedId))
 					.findFirst()
 					.orElse(null);
 		}
