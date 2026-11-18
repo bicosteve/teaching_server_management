@@ -11,10 +11,14 @@ APPROVED_OPERATION_STATUS = "APPROVED"
 # Matches server OperationExecutionFeedbackRequest @Size(max = 1000).
 EXECUTION_RESULT_MAX_LEN = 1000
 
-# Linux group naming.
-GROUP_NAME_MAX_LEN = 32
-GROUP_NAME_PATTERN = re.compile(rf"^[a-z_][a-z0-9_-]{{0,{GROUP_NAME_MAX_LEN - 1}}}$")
-GROUP_NAME_DIGIT_PREFIX = "c-"
+# Shared Linux group name constraints.
+LINUX_GROUP_NAME_MAX_LEN = 32
+LINUX_GROUP_NAME_PATTERN = re.compile(
+	rf"^[a-z_][a-z0-9_-]{{0,{LINUX_GROUP_NAME_MAX_LEN - 1}}}$"
+)
+
+# Course Linux group naming
+COURSE_GROUP_DIGIT_PREFIX = "c-"
 
 # Subprocess timeouts (seconds).
 GROUP_LOOKUP_TIMEOUT = 10

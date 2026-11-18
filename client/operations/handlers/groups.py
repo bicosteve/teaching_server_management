@@ -6,12 +6,12 @@ import re
 import subprocess
 
 from config import (
+	COURSE_GROUP_DIGIT_PREFIX,
 	GETENT,
 	GROUP_COMMAND_TIMEOUT,
 	GROUP_LOOKUP_TIMEOUT,
-	GROUP_NAME_DIGIT_PREFIX,
-	GROUP_NAME_MAX_LEN,
-	GROUP_NAME_PATTERN,
+	LINUX_GROUP_NAME_MAX_LEN,
+	LINUX_GROUP_NAME_PATTERN,
 	GROUPADD,
 	GROUPDEL,
 	GROUPMOD,
@@ -36,7 +36,7 @@ class ShellCommandError(RuntimeError):
 def validate_group_name(group_name: str) -> None:
 	if not isinstance(group_name, str) or not group_name:
 		raise ValueError("Missing or invalid group name")
-	if not GROUP_NAME_PATTERN.fullmatch(group_name):
+	if not LINUX_GROUP_NAME_PATTERN.fullmatch(group_name):
 		raise ValueError(f"Invalid Linux group name: {group_name}")
 
 
@@ -47,15 +47,17 @@ def course_group_name(name: str, academic_year: str) -> str:
 	if not base or not year:
 		raise ValueError("Cannot derive group name from empty name or academic_year")
 
-	candidate = f"{base}-{year}"
-	if candidate[0].isdigit():
-		candidate = f"{GROUP_NAME_DIGIT_PREFIX}{candidate}"
+	suffix = f"-{year}"
+	prefix = COURSE_GROUP_DIGIT_PREFIX if base[0].isdigit() else ""
+	budget = LINUX_GROUP_NAME_MAX_LEN - len(suffix) - len(prefix)
+	if budget < 1:
+		raise ValueError(f"Academic year slug too long for a Linux group name: {year}")
 
-	if len(candidate) > GROUP_NAME_MAX_LEN:
-		suffix = f"-{year}"
-		max_base = max(1, GROUP_NAME_MAX_LEN - len(suffix))
-		candidate = f"{base[:max_base].rstrip('-')}{suffix}"[:GROUP_NAME_MAX_LEN].rstrip("-")
+	base = base[:budget].rstrip("-")
+	if not base:
+		raise ValueError("Cannot derive group name from empty name or academic_year")
 
+	candidate = f"{prefix}{base}{suffix}"
 	validate_group_name(candidate)
 	return candidate
 
