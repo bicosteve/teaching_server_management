@@ -48,8 +48,7 @@ def course_group_name(name: str, academic_year: str) -> str:
 		raise ValueError("Cannot derive group name from empty name or academic_year")
 
 	suffix = f"-{year}"
-	prefix = COURSE_GROUP_DIGIT_PREFIX if base[0].isdigit() else ""
-	budget = LINUX_GROUP_NAME_MAX_LEN - len(suffix) - len(prefix)
+	budget = LINUX_GROUP_NAME_MAX_LEN - len(suffix) - len(COURSE_GROUP_DIGIT_PREFIX)
 	if budget < 1:
 		raise ValueError(f"Academic year slug too long for a Linux group name: {year}")
 
@@ -57,7 +56,7 @@ def course_group_name(name: str, academic_year: str) -> str:
 	if not base:
 		raise ValueError("Cannot derive group name from empty name or academic_year")
 
-	candidate = f"{prefix}{base}{suffix}"
+	candidate = f"{COURSE_GROUP_DIGIT_PREFIX}{base}{suffix}"
 	validate_group_name(candidate)
 	return candidate
 
