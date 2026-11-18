@@ -9,9 +9,11 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import cz.fit.tsm.dto.ServerOperationResponse;
+import cz.fit.tsm.model.ServerOperationStatus;
 import cz.fit.tsm.security.UserPrincipal;
 import cz.fit.tsm.service.ServerOperationService;
 
@@ -28,9 +30,12 @@ public class AdminServerOperationController {
 	}
 
 	@GetMapping
-	public List<ServerOperationResponse> list(@AuthenticationPrincipal UserPrincipal principal) {
-		log.info("list: admin={}", principal.getId());
-		return serverOperationService.listAll();
+	public List<ServerOperationResponse> list(@AuthenticationPrincipal UserPrincipal principal,
+			@RequestParam(required = false) ServerOperationStatus status) {
+		log.info("list: admin={} status={}", principal.getId(), status);
+		return status == null
+				? serverOperationService.listAll()
+				: serverOperationService.listByStatus(status);
 	}
 
 	@GetMapping("/{operationId}")
