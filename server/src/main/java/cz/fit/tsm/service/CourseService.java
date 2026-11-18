@@ -198,10 +198,8 @@ public class CourseService {
 	}
 
 	private Optional<ServerOperation> findPendingCreateCourseOp(UUID courseId, UUID teacherId) {
-		return linkedOperations(courseId, teacherId).stream()
-				.filter(op -> op.getType() == ServerOperationType.CREATE_COURSE)
-				.filter(op -> op.getStatus() == ServerOperationStatus.PENDING)
-				.findFirst();
+		return findCreateCourseOp(courseId, teacherId)
+				.filter(op -> op.getStatus() == ServerOperationStatus.PENDING);
 	}
 
 	private Optional<ServerOperation> findCreateCourseOp(UUID courseId, UUID teacherId) {

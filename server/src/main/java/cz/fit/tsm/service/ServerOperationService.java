@@ -56,6 +56,11 @@ public class ServerOperationService {
 	}
 
 	@Transactional(readOnly = true)
+	public List<ServerOperationResponse> listByStatus(ServerOperationStatus status) {
+		return toResponses(serverOperationRepository.findByStatusOrderByCreatedAtDesc(status));
+	}
+
+	@Transactional(readOnly = true)
 	public ServerOperationResponse get(UUID operationId) {
 		return toResponses(List.of(require(operationId))).getFirst();
 	}
@@ -63,6 +68,11 @@ public class ServerOperationService {
 	@Transactional(readOnly = true)
 	public List<ServerOperationResponse> listForRequester(UUID requesterId) {
 		return toResponses(serverOperationRepository.findByRequestedByOrderByCreatedAtDesc(requesterId));
+	}
+
+	@Transactional(readOnly = true)
+	public List<ServerOperationResponse> listForRequester(UUID requesterId, ServerOperationStatus status) {
+		return toResponses(serverOperationRepository.findByRequestedByAndStatusOrderByCreatedAtDesc(requesterId, status));
 	}
 
 	@Transactional(readOnly = true)
