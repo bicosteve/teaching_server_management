@@ -237,6 +237,10 @@ public class CourseService {
 		putIfChanged(payload, "name", course.getName(), name);
 		putIfChanged(payload, "description", course.getDescription(), description);
 		putIfChanged(payload, "academic_year", course.getAcademicYear(), academicYear);
+		if (payload.containsKey("name") || payload.containsKey("academic_year")) {
+			payload.put("previous_name", course.getName());
+			payload.put("previous_academic_year", course.getAcademicYear());
+		}
 		return payload;
 	}
 

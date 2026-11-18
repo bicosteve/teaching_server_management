@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from typing import Any
+from uuid import UUID
 
 import httpx
 
-from config import API_TIMEOUT_SECONDS, APPROVED_OPERATION_STATUS
+from config import API_TIMEOUT_SECONDS, APPROVED_OPERATION_STATUS, EXECUTION_RESULT_MAX_LEN
 
 
 class TsmClient:
@@ -65,6 +66,21 @@ class TsmClient:
 	def list_approved_operations(self) -> list[dict[str, Any]]:
 		return self.list_operations(status=APPROVED_OPERATION_STATUS)
 
+	def report_execution_feedback(
+		self,
+		operation_id: str | UUID,
+		*,
+		success: bool,
+		execution_result: str | None = None,
+	) -> dict[str, Any]:
+		body: dict[str, Any] = {"success": success}
+		if execution_result is not None:
+			body["executionResult"] = truncate_execution_result(execution_result)
+		result = self.post(f"/api/admin/operations/{operation_id}/feedback", json=body)
+		if not isinstance(result, dict):
+			raise TypeError("Expected a server operation response")
+		return result
+
 	def get(self, path: str, **kwargs: Any) -> Any:
 		return self.request("GET", path, **kwargs)
 
@@ -85,3 +101,10 @@ class TsmClient:
 		self.access_token = payload["accessToken"]
 		self.refresh_token = payload["refreshToken"]
 		self.user = payload.get("user")
+
+
+def truncate_execution_result(value: str) -> str:
+	if len(value) <= EXECUTION_RESULT_MAX_LEN:
+		return value
+	suffix = "\n...[truncated]"
+	return value[: EXECUTION_RESULT_MAX_LEN - len(suffix)].rstrip() + suffix

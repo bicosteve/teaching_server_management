@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 import httpx
@@ -55,7 +56,7 @@ class App:
 			while True:
 				if self.browse(client) == "quit":
 					return 0
-				self.run_checked()
+				self.run_checked(client)
 
 	def browse(self, client: TsmClient) -> str:
 		with self.console.screen() as screen:
@@ -113,7 +114,7 @@ class App:
 		self.state.clamp_cursor()
 		self.state.detail = None
 
-	def run_checked(self) -> None:
+	def run_checked(self, client: TsmClient) -> None:
 		selected = self.state.checked_operations()
 		if not selected:
 			self.state.status = "Error: nothing checked - Space to check, then x to run."
@@ -134,20 +135,65 @@ class App:
 		failures: list[str] = []
 		for op in selected:
 			label = f"{op.get('type') or '?'}/{op.get('target') or op.get('id') or '?'}"
+			op_id = op.get("id")
 			try:
-				dispatcher.execute(op)
-				ok += 1
-				if op.get("id") is not None:
-					self.state.checked.discard(str(op["id"]))
-			except Exception as exc:  # noqa: BLE001 - show per-op failure in the status bar
-				failures.append(f"{label}: {exc}")
+				result = dispatcher.execute(op)
+			except Exception as exc:  
+				detail = str(exc)
+				feedback_error = self.try_report_feedback(
+					client, op_id, success=False, execution_result=detail
+				)
+				if feedback_error:
+					detail = f"{detail}; feedback error: {feedback_error}"
+				failures.append(f"{label}: {detail}")
+				continue
 
-		self.state.detail = None
-		if failures:
-			extra = f" (+{len(failures) - 1} more)" if len(failures) > 1 else ""
-			self.state.status = f"Error: ran {ok}/{len(selected)} - {failures[0]}{extra}"
-		else:
-			self.state.status = f"Ran {ok} operation(s) successfully."
+			feedback_error = self.try_report_feedback(
+				client, op_id, success=True, execution_result=success_result(result)
+			)
+			if feedback_error:
+				failures.append(f"{label}: local ok, feedback failed: {feedback_error}")
+				continue
+
+			ok += 1
+			if op_id is not None:
+				self.state.checked.discard(str(op_id))
+
+		summary = (
+			f"Error: ran {ok}/{len(selected)} - {failures[0]}"
+			+ (f" (+{len(failures) - 1} more)" if len(failures) > 1 else "")
+			if failures
+			else f"Ran {ok} operation(s) successfully."
+		)
+		self.reload(client, keep_status=True)
+		self.state.status = summary
+
+	def try_report_feedback(
+		self,
+		client: TsmClient,
+		operation_id: Any,
+		*,
+		success: bool,
+		execution_result: str,
+	) -> str | None:
+		if operation_id is None:
+			return "missing operation id"
+		try:
+			client.report_execution_feedback(
+				operation_id,
+				success=success,
+				execution_result=execution_result,
+			)
+		except Exception as exc:  # noqa: BLE001
+			return str(exc)
+		return None
+
+
+def success_result(result: dict[str, Any]) -> str:
+	message = result.get("message")
+	if isinstance(message, str) and message.strip():
+		return message.strip()
+	return json.dumps(result, ensure_ascii=False, sort_keys=True)
 
 
 def http_error(exc: httpx.HTTPError) -> str:

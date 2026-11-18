@@ -1,6 +1,7 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
 	xmlns:ui="jakarta.faces.facelets"
 	xmlns:h="jakarta.faces.html"
+	xmlns:f="jakarta.faces.core"
 	xmlns:p="http://primefaces.org/ui">
 	<ui:include src="/includes/page-header.xhtml">
 		<ui:param name="title" value="#{msg['admin.operations.heading']}"/>
@@ -9,14 +10,16 @@
 
 	<p:messages id="operationsMessages" showDetail="false" closable="true" styleClass="mb-3"/>
 	<p:card>
+		<f:event type="preRenderComponent" listener="#{adminOperationsBean.onPageLoad}"/>
 		<p:dataTable id="operationsList" value="#{adminOperationsBean.operations}" var="operation"
 			emptyMessage="#{msg['admin.operations.empty']}" stripedRows="true"
 			styleClass="w-full" tableStyle="width:100%; table-layout:fixed"
 			selectionMode="single" selection="#{adminOperationsBean.selected}"
 			rowKey="#{operation.id()}" rowSelectMode="new">
 			<p:ajax event="rowSelect" listener="#{adminOperationsBean.onRowSelect}"
-				update=":appShell:operationDetailDialog" process="@this"
+				update=":appShell:operationDetailDialog :appShell:operationsList" process="@this"
 				oncomplete="PF('operationDetailDialog').show()"/>
+
 			<p:column headerText="#{msg['admin.operations.type']}" style="width:15%">
 				<span class="block overflow-hidden white-space-nowrap text-overflow-ellipsis text-sm font-normal"
 					title="#{operation.type()}">#{operation.type()}</span>
