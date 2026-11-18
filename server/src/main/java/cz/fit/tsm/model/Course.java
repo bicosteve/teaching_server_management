@@ -87,13 +87,25 @@ public class Course {
 		this.name = name;
 		this.description = description;
 		this.academicYear = academicYear;
-		if (this.status == CourseStatus.FAILED) {
+		if (this.status == CourseStatus.FAILED || this.status == CourseStatus.REJECTED) {
 			this.status = CourseStatus.PENDING;
 		}
 	}
 
 	public void markPending() {
 		this.status = CourseStatus.PENDING;
+	}
+
+	public void markApproved() {
+		this.status = CourseStatus.APPROVED;
+	}
+
+	public void markRejected() {
+		this.status = CourseStatus.REJECTED;
+	}
+
+	public void markSynced() {
+		this.status = CourseStatus.SYNCED;
 	}
 
 	public boolean isPending() {
