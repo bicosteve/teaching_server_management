@@ -5,9 +5,22 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-### Client ###
+### Client / Python ###
 .venv/
 venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.python-version
 
 ### STS ###
 .apt_generated

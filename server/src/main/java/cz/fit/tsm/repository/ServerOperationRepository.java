@@ -7,13 +7,17 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import cz.fit.tsm.model.ServerOperation;
-import cz.fit.tsm.model.ServerOperationType;
+import cz.fit.tsm.model.ServerOperationStatus;
 
 public interface ServerOperationRepository extends JpaRepository<ServerOperation, UUID> {
 
-	List<ServerOperation> findByRequestedByAndTypeOrderByCreatedAtDesc(UUID requestedBy, ServerOperationType type);
+	List<ServerOperation> findAllByOrderByCreatedAtDesc();
+
+	List<ServerOperation> findByStatusOrderByCreatedAtDesc(ServerOperationStatus status);
 
 	List<ServerOperation> findByRequestedByOrderByCreatedAtDesc(UUID requestedBy);
+
+	List<ServerOperation> findByRequestedByAndStatusOrderByCreatedAtDesc(UUID requestedBy, ServerOperationStatus status);
 
 	Optional<ServerOperation> findByIdAndRequestedBy(UUID id, UUID requestedBy);
 }

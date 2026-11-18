@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS courses (
 	name TEXT NOT NULL,
 	description TEXT,
 	academic_year TEXT NOT NULL,
-	status TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'SYNCED', 'FAILED')),
+	status TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED', 'SYNCED', 'FAILED')),
 	archived_at TIMESTAMPTZ,
 	UNIQUE (name, academic_year)
 );
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS projects (
 	description TEXT,
 	type TEXT NOT NULL,
 	deadline TIMESTAMPTZ,
-	status TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'SYNCED', 'FAILED'))
+	status TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED', 'SYNCED', 'FAILED'))
 );
 
 CREATE TABLE IF NOT EXISTS teams (
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS server_operations (
 	id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 	type TEXT NOT NULL,
 	payload JSONB NOT NULL DEFAULT '{}'::jsonb,
-	status TEXT NOT NULL CHECK (status IN ('PENDING', 'REJECTED', 'FAILED', 'COMPLETED')),
+	status TEXT NOT NULL CHECK (status IN ('PENDING', 'REJECTED', 'APPROVED', 'FAILED', 'COMPLETED')),
 	requested_by UUID NOT NULL REFERENCES users (id),
 	approved_by UUID REFERENCES users (id),
 	created_at TIMESTAMPTZ NOT NULL DEFAULT now(),

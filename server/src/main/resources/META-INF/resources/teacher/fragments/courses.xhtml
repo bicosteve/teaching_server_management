@@ -29,10 +29,9 @@
 						styleClass="block no-underline text-color hover:surface-hover border-round w-full">
 						<div class="flex align-items-center justify-content-between gap-2 mb-1">
 							<span class="text-lg font-medium line-height-2 m-0">#{course.name()}</span>
-							<p:tag value="#{course.status()}"
-								severity="#{course.status().name() eq 'PENDING' ? 'warn'
-									: (course.status().name() eq 'SYNCED' ? 'success'
-									: (course.status().name() eq 'FAILED' ? 'danger' : 'secondary'))}"/>
+							<span title="#{msg[course.statusTooltipKey()]}">
+								<p:tag value="#{course.status()}" severity="#{course.statusSeverity()}"/>
+							</span>
 						</div>
 						<div class="text-sm font-normal text-color-secondary line-height-2 m-0 mb-2">
 							#{course.academicYear()}

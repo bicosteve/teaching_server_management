@@ -1,14 +1,20 @@
 -- Seed three teacher courses (PENDING / SYNCED / FAILED) for local development.
--- Requires the teacher user from seed-users.sql.
+-- Requires the admin and teacher users from seed-users.sql.
 
 DO $$
 DECLARE
+	admin_id UUID;
 	teacher_id UUID;
 	pending_id UUID;
 	synced_id UUID;
 	failed_id UUID;
 	op_id UUID;
 BEGIN
+	SELECT id INTO admin_id FROM users WHERE username = 'admin';
+	IF admin_id IS NULL THEN
+		RAISE EXCEPTION 'Admin user not found; run seed-users.sh first';
+	END IF;
+
 	SELECT id INTO teacher_id FROM users WHERE username = 'teacher';
 	IF teacher_id IS NULL THEN
 		RAISE EXCEPTION 'Teacher user not found; run seed-users.sh first';
@@ -58,7 +64,7 @@ BEGIN
 			),
 			'COMPLETED',
 			teacher_id,
-			teacher_id,
+			admin_id,
 			now(),
 			now(),
 			'Course workspace provisioned'
@@ -82,7 +88,7 @@ BEGIN
 			),
 			'FAILED',
 			teacher_id,
-			teacher_id,
+			admin_id,
 			now(),
 			now(),
 			'Provisioning failed'
