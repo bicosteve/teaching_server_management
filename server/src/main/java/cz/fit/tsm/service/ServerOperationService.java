@@ -19,8 +19,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 import cz.fit.tsm.dto.ServerOperationResponse;
 import cz.fit.tsm.model.Course;
+import cz.fit.tsm.model.CourseStatus;
 import cz.fit.tsm.model.ServerOperation;
 import cz.fit.tsm.model.ServerOperationCourse;
+import cz.fit.tsm.model.ServerOperationStatus;
 import cz.fit.tsm.model.ServerOperationType;
 import cz.fit.tsm.model.User;
 import cz.fit.tsm.repository.CourseRepository;
@@ -76,6 +78,26 @@ public class ServerOperationService {
 	}
 
 	@Transactional
+	public void approve(UUID operationId, UUID adminId) {
+		ServerOperation operation = require(operationId);
+		assertPending(operation);
+		operation.markApproved(adminId);
+		serverOperationRepository.save(operation);
+		syncLinkedCourseStatus(operationId, CourseStatus.APPROVED);
+		log.info("approve: op={} admin={}", operationId, adminId);
+	}
+
+	@Transactional
+	public void reject(UUID operationId, UUID adminId) {
+		ServerOperation operation = require(operationId);
+		assertPending(operation);
+		operation.markRejected();
+		serverOperationRepository.save(operation);
+		syncLinkedCourseStatus(operationId, CourseStatus.REJECTED);
+		log.info("reject: op={} admin={}", operationId, adminId);
+	}
+
+	@Transactional
 	public void delete(UUID operationId, UUID requesterId) {
 		ServerOperation operation = requireOwned(operationId, requesterId);
 		assertEditable(operation);
@@ -112,6 +134,12 @@ public class ServerOperationService {
 		}
 	}
 
+	static void assertPending(ServerOperation operation) {
+		if (operation.getStatus() != ServerOperationStatus.PENDING) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "Only pending operations can be decided");
+		}
+	}
+
 	private List<ServerOperationResponse> toResponses(List<ServerOperation> operations) {
 		Map<UUID, User> users = userRepository.findAllById(userIds(operations)).stream()
 				.collect(Collectors.toMap(User::getId, Function.identity()));
@@ -123,6 +151,27 @@ public class ServerOperationService {
 						displayName(users.get(op.getApprovedBy())),
 						courseNames.get(op.getId())))
 				.toList();
+	}
+
+	private void syncLinkedCourseStatus(UUID operationId, CourseStatus status) {
+		Course course = linkedCourse(operationId);
+		if (course == null) {
+			return;
+		}
+		if (status == CourseStatus.APPROVED) {
+			course.markApproved();
+		}
+		else if (status == CourseStatus.REJECTED) {
+			course.markRejected();
+		}
+		courseRepository.save(course);
+	}
+
+	private Course linkedCourse(UUID operationId) {
+		return serverOperationCourseRepository.findByOperationId(operationId)
+				.map(ServerOperationCourse::getCourseId)
+				.flatMap(courseRepository::findById)
+				.orElse(null);
 	}
 
 	private Course linkedCourse(UUID operationId, UUID requesterId) {

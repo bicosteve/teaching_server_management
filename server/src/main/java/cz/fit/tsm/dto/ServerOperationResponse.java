@@ -75,13 +75,22 @@ public record ServerOperationResponse(
 	public String statusSeverity() {
 		return switch (status) {
 			case PENDING -> "warn";
+			case APPROVED -> "info";
 			case COMPLETED -> "success";
 			case REJECTED, FAILED -> "danger";
 		};
 	}
 
+	public String statusTooltipKey() {
+		return "operation.status." + status.name();
+	}
+
 	public boolean editable() {
 		return status != ServerOperationStatus.COMPLETED;
+	}
+
+	public boolean pending() {
+		return status == ServerOperationStatus.PENDING;
 	}
 
 	private static String humanizeKey(String key) {

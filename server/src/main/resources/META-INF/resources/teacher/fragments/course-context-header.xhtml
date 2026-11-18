@@ -9,10 +9,10 @@
 					#{teacherCourseBean.selectedCourse.name()} · #{teacherCourseBean.selectedCourse.academicYear()}
 				</div>
 			</div>
-			<p:tag value="#{teacherCourseBean.selectedCourse.status()}"
-				severity="#{teacherCourseBean.selectedCourse.status().name() eq 'PENDING' ? 'warn'
-					: (teacherCourseBean.selectedCourse.status().name() eq 'SYNCED' ? 'success'
-					: (teacherCourseBean.selectedCourse.status().name() eq 'FAILED' ? 'danger' : 'secondary'))}"/>
+			<span title="#{msg[teacherCourseBean.selectedCourse.statusTooltipKey()]}">
+				<p:tag value="#{teacherCourseBean.selectedCourse.status()}"
+					severity="#{teacherCourseBean.selectedCourse.statusSeverity()}"/>
+			</span>
 		</div>
 	</div>
 </ui:composition>

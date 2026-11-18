@@ -19,7 +19,9 @@
 				</span>
 			</p:column>
 			<p:column headerText="#{msg['teacher.requests.status']}" style="width:9rem">
-				<p:tag value="#{operation.status()}" severity="#{operation.statusSeverity()}"/>
+				<span title="#{msg[operation.statusTooltipKey()]}">
+					<p:tag value="#{operation.status()}" severity="#{operation.statusSeverity()}"/>
+				</span>
 			</p:column>
 			<p:column headerText="#{msg['teacher.requests.createdAt']}" style="width:12rem">
 				<span class="text-sm font-normal text-color-secondary">#{operation.createdAt()}</span>

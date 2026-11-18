@@ -122,4 +122,16 @@ public class ServerOperation {
 		this.executedAt = null;
 		this.executionResult = null;
 	}
+
+	public void markApproved(UUID adminId) {
+		this.status = ServerOperationStatus.APPROVED;
+		this.approvedBy = adminId;
+		this.approvedAt = Instant.now();
+	}
+
+	public void markRejected() {
+		this.status = ServerOperationStatus.REJECTED;
+		this.approvedBy = null;
+		this.approvedAt = null;
+	}
 }

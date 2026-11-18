@@ -7,6 +7,7 @@
 		<ui:param name="subtitle" value="#{msg['admin.operations.subtitle']}"/>
 	</ui:include>
 
+	<p:messages id="operationsMessages" showDetail="false" closable="true" styleClass="mb-3"/>
 	<p:card>
 		<p:dataTable id="operationsList" value="#{adminOperationsBean.operations}" var="operation"
 			emptyMessage="#{msg['admin.operations.empty']}" stripedRows="true"
@@ -16,31 +17,61 @@
 			<p:ajax event="rowSelect" listener="#{adminOperationsBean.onRowSelect}"
 				update=":appShell:operationDetailDialog" process="@this"
 				oncomplete="PF('operationDetailDialog').show()"/>
-			<p:column headerText="#{msg['admin.operations.type']}" style="width:18%">
+			<p:column headerText="#{msg['admin.operations.type']}" style="width:15%">
 				<span class="block overflow-hidden white-space-nowrap text-overflow-ellipsis text-sm font-normal"
 					title="#{operation.type()}">#{operation.type()}</span>
 			</p:column>
-			<p:column headerText="#{msg['admin.operations.target']}" style="width:30%">
+			<p:column headerText="#{msg['admin.operations.target']}" style="width:24%">
 				<span class="block overflow-hidden white-space-nowrap text-overflow-ellipsis text-sm font-normal text-color-secondary"
 					title="#{operation.target()}">
 					#{empty operation.target() ? msg['admin.operations.noTarget'] : operation.target()}
 				</span>
 			</p:column>
-			<p:column headerText="#{msg['admin.operations.requestedBy']}" style="width:18%">
+			<p:column headerText="#{msg['admin.operations.requestedBy']}" style="width:16%">
 				<span class="block overflow-hidden white-space-nowrap text-overflow-ellipsis text-sm font-normal text-color-secondary"
 					title="#{operation.requestedByName()}">
 					#{empty operation.requestedByName() ? msg['admin.operations.noTarget'] : operation.requestedByName()}
 				</span>
 			</p:column>
 			<p:column headerText="#{msg['admin.operations.status']}" style="width:12%">
-				<p:tag value="#{operation.status()}" severity="#{operation.statusSeverity()}"/>
+				<span title="#{msg[operation.statusTooltipKey()]}">
+					<p:tag value="#{operation.status()}" severity="#{operation.statusSeverity()}"/>
+				</span>
 			</p:column>
-			<p:column headerText="#{msg['admin.operations.createdAt']}" style="width:22%">
+			<p:column headerText="#{msg['admin.operations.createdAt']}" style="width:18%">
 				<span class="block overflow-hidden white-space-nowrap text-overflow-ellipsis text-sm font-normal text-color-secondary"
 					title="#{operation.createdAt()}">#{operation.createdAt()}</span>
 			</p:column>
+			<p:column headerText="#{msg['admin.operations.actions']}" style="width:15%">
+				<div class="flex gap-1" onclick="event.stopPropagation()">
+					<p:commandButton icon="pi pi-check" title="#{msg['admin.operations.approve']}"
+						ariaLabel="#{msg['admin.operations.approve']}"
+						action="#{adminOperationsBean.approve(operation.id())}"
+						update=":appShell:operationsMessages :appShell:operationsList" process="@this"
+						styleClass="ui-button-outlined ui-button-success ui-button-sm"
+						rendered="#{operation.pending()}">
+						<p:confirm header="#{msg['admin.operations.approveConfirmHeader']}"
+							message="#{msg['admin.operations.approveConfirm']}" icon="pi pi-check"/>
+					</p:commandButton>
+					<p:commandButton icon="pi pi-times" title="#{msg['admin.operations.reject']}"
+						ariaLabel="#{msg['admin.operations.reject']}"
+						action="#{adminOperationsBean.reject(operation.id())}"
+						update=":appShell:operationsMessages :appShell:operationsList" process="@this"
+						styleClass="ui-button-outlined ui-button-danger ui-button-sm"
+						rendered="#{operation.pending()}">
+						<p:confirm header="#{msg['admin.operations.rejectConfirmHeader']}"
+							message="#{msg['admin.operations.rejectConfirm']}" icon="pi pi-exclamation-triangle"/>
+					</p:commandButton>
+				</div>
+			</p:column>
 		</p:dataTable>
 	</p:card>
+	<p:confirmDialog global="true" showEffect="fade" hideEffect="fade" responsive="true">
+		<p:commandButton value="#{msg['admin.operations.confirmYes']}" type="button"
+			styleClass="ui-confirmdialog-yes" icon="pi pi-check"/>
+		<p:commandButton value="#{msg['admin.operations.confirmNo']}" type="button"
+			styleClass="ui-confirmdialog-no ui-button-outlined" icon="pi pi-times"/>
+	</p:confirmDialog>
 
 	<p:dialog id="operationDetailDialog" widgetVar="operationDetailDialog"
 		header="#{msg['admin.operations.detailTitle']}" modal="true" appendTo="@(body)"
@@ -52,8 +83,10 @@
 			rendered="#{adminOperationsBean.selected ne null}">
 			<div class="flex align-items-center justify-content-between gap-2 flex-wrap">
 				<span class="text-sm font-medium">#{adminOperationsBean.selected.type()}</span>
-				<p:tag value="#{adminOperationsBean.selected.status()}"
-					severity="#{adminOperationsBean.selected.statusSeverity()}"/>
+				<span title="#{msg[adminOperationsBean.selected.statusTooltipKey()]}">
+					<p:tag value="#{adminOperationsBean.selected.status()}"
+						severity="#{adminOperationsBean.selected.statusSeverity()}"/>
+				</span>
 			</div>
 
 			<ui:repeat value="#{adminOperationsBean.selected.metaFields()}" var="field">
