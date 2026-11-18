@@ -234,9 +234,18 @@ public class CourseService {
 	private static Map<String, Object> changedCourseFields(Course course, String name, String description,
 			String academicYear) {
 		Map<String, Object> payload = new LinkedHashMap<>();
+		boolean identityChanged = !Objects.equals(course.getName(), name)
+				|| !Objects.equals(course.getAcademicYear(), academicYear);
 		putIfChanged(payload, "name", course.getName(), name);
 		putIfChanged(payload, "description", course.getDescription(), description);
 		putIfChanged(payload, "academic_year", course.getAcademicYear(), academicYear);
+		if (identityChanged) {
+			// Client needs both old and new identity to rename the Linux group.
+			payload.put("name", name);
+			payload.put("academic_year", academicYear);
+			payload.put("previous_name", course.getName());
+			payload.put("previous_academic_year", course.getAcademicYear());
+		}
 		return payload;
 	}
 
