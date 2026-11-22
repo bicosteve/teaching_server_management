@@ -20,4 +20,17 @@ public record CourseResponse(
 				course.getAcademicYear(),
 				course.getStatus());
 	}
+
+	public String statusSeverity() {
+		return switch (status) {
+			case PENDING -> "warn";
+			case APPROVED -> "info";
+			case SYNCED -> "success";
+			case REJECTED, FAILED -> "danger";
+		};
+	}
+
+	public String statusTooltipKey() {
+		return "course.status." + status.name();
+	}
 }

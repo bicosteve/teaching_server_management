@@ -13,17 +13,15 @@
 			<p:column headerText="#{msg['teacher.requests.type']}">
 				<span class="text-sm font-normal">#{operation.type()}</span>
 			</p:column>
-			<p:column headerText="#{msg['teacher.requests.summary']}">
+			<p:column headerText="#{msg['teacher.requests.target']}">
 				<span class="text-sm font-normal text-color-secondary">
-					#{empty operation.summary() ? msg['teacher.requests.noSummary'] : operation.summary()}
+					#{empty operation.target() ? msg['teacher.requests.noTarget'] : operation.target()}
 				</span>
 			</p:column>
 			<p:column headerText="#{msg['teacher.requests.status']}" style="width:9rem">
-				<p:tag value="#{operation.status()}"
-					severity="#{operation.status().name() eq 'PENDING' ? 'warn'
-						: (operation.status().name() eq 'COMPLETED' ? 'success'
-						: (operation.status().name() eq 'REJECTED' ? 'danger'
-						: (operation.status().name() eq 'FAILED' ? 'danger' : 'secondary')))}"/>
+				<span title="#{msg[operation.statusTooltipKey()]}">
+					<p:tag value="#{operation.status()}" severity="#{operation.statusSeverity()}"/>
+				</span>
 			</p:column>
 			<p:column headerText="#{msg['teacher.requests.createdAt']}" style="width:12rem">
 				<span class="text-sm font-normal text-color-secondary">#{operation.createdAt()}</span>
