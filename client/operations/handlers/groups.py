@@ -33,6 +33,10 @@ class ShellCommandError(RuntimeError):
 		super().__init__(f"{' '.join(command)} failed: {detail}")
 
 
+class SudoAuthenticationError(RuntimeError):
+	"""Raised when sudo rejects the password. Local-only, do not report to the server."""
+
+
 def validate_group_name(group_name: str) -> None:
 	if not isinstance(group_name, str) or not group_name:
 		raise ValueError("Missing or invalid group name")
@@ -61,27 +65,64 @@ def course_group_name(name: str, academic_year: str) -> str:
 	return candidate
 
 
+def run_sudo(command: list[str], password: str) -> None:
+	"""Run command under sudo, reading password from stdin (not stored)."""
+	reported = list(command)
+	completed = subprocess.run(
+		[SUDO, "-S", "-k", "--", *command],
+		input=f"{password}\n",
+		capture_output=True,
+		text=True,
+		timeout=GROUP_COMMAND_TIMEOUT,
+		check=False,
+	)
+	if completed.returncode == 0:
+		return
+
+	stderr = completed.stderr or ""
+	stdout = completed.stdout or ""
+	if is_sudo_auth_failure(stderr, stdout):
+		raise SudoAuthenticationError((stderr or stdout).strip() or "incorrect sudo password")
+	raise ShellCommandError(
+		reported,
+		completed.returncode,
+		stdout=stdout,
+		stderr=stderr,
+	)
+
+
+def is_sudo_auth_failure(stderr: str, stdout: str = "") -> bool:
+	text = f"{stderr}\n{stdout}".lower()
+	return any(
+		hint in text
+		for hint in (
+			"incorrect password",
+			"sorry, try again",
+			"a password is required",
+			"authentication failure",
+			"authentication failed",
+		)
+	)
+
+
 class LinuxGroupManager:
 	"""Create, rename, and delete local Linux groups."""
 
-	def __init__(self, sudo_password: str | None = None) -> None:
-		self.sudo_password = sudo_password
-
-	def create(self, group_name: str) -> dict:
+	def create(self, group_name: str, *, sudo_password: str) -> dict:
 		validate_group_name(group_name)
 		if self.exists(group_name):
 			raise RuntimeError(f"Group already exists: {group_name}")
-		self.run([GROUPADD, group_name])
+		run_sudo([GROUPADD, group_name], sudo_password)
 		return self.result("CREATE", group_name, f"Group {group_name} created successfully")
 
-	def delete(self, group_name: str) -> dict:
+	def delete(self, group_name: str, *, sudo_password: str) -> dict:
 		validate_group_name(group_name)
 		if not self.exists(group_name):
 			raise RuntimeError(f"Group does not exist: {group_name}")
-		self.run([GROUPDEL, group_name])
+		run_sudo([GROUPDEL, group_name], sudo_password)
 		return self.result("DELETE", group_name, f"Group {group_name} deleted successfully")
 
-	def rename(self, old_name: str, new_name: str) -> dict:
+	def rename(self, old_name: str, new_name: str, *, sudo_password: str) -> dict:
 		validate_group_name(old_name)
 		validate_group_name(new_name)
 		if old_name == new_name:
@@ -93,7 +134,7 @@ class LinuxGroupManager:
 			raise RuntimeError(f"Group does not exist: {old_name}")
 		if self.exists(new_name):
 			raise RuntimeError(f"Group already exists: {new_name}")
-		self.run([GROUPMOD, "-n", new_name, old_name])
+		run_sudo([GROUPMOD, "-n", new_name, old_name], sudo_password)
 		return {
 			**self.result("RENAME", new_name, f"Group {old_name} renamed to {new_name}"),
 			"previous_group_name": old_name,
@@ -108,29 +149,6 @@ class LinuxGroupManager:
 			check=False,
 		)
 		return result.returncode == 0
-
-	def run(self, command: list[str]) -> None:
-		reported = list(command)
-		if self.sudo_password is None:
-			argv, stdin = command, None
-		else:
-			argv, stdin = [SUDO, "-S", "--", *command], f"{self.sudo_password}\n"
-
-		completed = subprocess.run(
-			argv,
-			input=stdin,
-			capture_output=True,
-			text=True,
-			timeout=GROUP_COMMAND_TIMEOUT,
-			check=False,
-		)
-		if completed.returncode != 0:
-			raise ShellCommandError(
-				reported,
-				completed.returncode,
-				stdout=completed.stdout or "",
-				stderr=completed.stderr or "",
-			)
 
 	@staticmethod
 	def result(action: str, group_name: str, message: str) -> dict:

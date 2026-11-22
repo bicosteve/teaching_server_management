@@ -10,6 +10,7 @@ from rich.console import Console
 
 from api.client import TsmClient
 from operations.dispatcher import OperationDispatcher
+from operations.handlers.groups import SudoAuthenticationError
 from ui.keys import mouse_tracking, read_key
 from ui.prompts import ask_login, ask_password
 from ui.render import build_screen
@@ -141,14 +142,18 @@ class App:
 			self.state.status = "Run cancelled."
 			return
 
-		dispatcher = OperationDispatcher(sudo_password=sudo_password)
+		dispatcher = OperationDispatcher()
 		ok = 0
 		failures: list[str] = []
 		for op in selected:
 			label = f"{op.get('type') or '?'}/{op.get('target') or op.get('id') or '?'}"
 			op_id = op.get("id")
 			try:
-				result = dispatcher.execute(op)
+				result = dispatcher.execute(op, sudo_password=sudo_password)
+			except SudoAuthenticationError as exc:
+				# Wrong sudo password is local-only; do not report failure to the server.
+				self.state.status = f"Error: sudo authentication failed - {exc}"
+				return
 			except Exception as exc:  
 				detail = str(exc)
 				feedback_error = self.try_report_feedback(

@@ -37,21 +37,28 @@ class CreateCourseHandler(CourseHandler):
 		self.require_group_name(params)
 		optional_str(params, "description")
 
-	def execute(self, params: dict[str, Any]) -> dict:
-		return self.annotate(self.groups.create(self.require_group_name(params)), "CREATE_COURSE", params)
+	def execute(self, params: dict[str, Any], *, sudo_password: str) -> dict:
+		return self.annotate(
+			self.groups.create(self.require_group_name(params), sudo_password=sudo_password),
+			"CREATE_COURSE",
+			params,
+		)
 
 
 class DeleteCourseHandler(CourseHandler):
 	def validate(self, params: dict[str, Any]) -> None:
 		self.require_group_name(params)
 
-	def execute(self, params: dict[str, Any]) -> dict:
-		return self.annotate(self.groups.delete(self.require_group_name(params)), "DELETE_COURSE", params)
+	def execute(self, params: dict[str, Any], *, sudo_password: str) -> dict:
+		return self.annotate(
+			self.groups.delete(self.require_group_name(params), sudo_password=sudo_password),
+			"DELETE_COURSE",
+			params,
+		)
 
 
 class UpdateCourseHandler(CourseHandler):
-	"""Rename the Linux group when name/year change; no-op for description-only.
-	"""
+	"""Rename the Linux group when name/year change; no-op for description-only."""
 
 	def validate(self, params: dict[str, Any]) -> None:
 		if not params:
@@ -70,7 +77,7 @@ class UpdateCourseHandler(CourseHandler):
 			course_group_name(old_name, old_year)
 			course_group_name(require_value(new_name, "name"), require_value(new_year, "academic_year"))
 
-	def execute(self, params: dict[str, Any]) -> dict:
+	def execute(self, params: dict[str, Any], *, sudo_password: str) -> dict:
 		if "name" not in params and "academic_year" not in params:
 			return {
 				"action": "NOOP",
@@ -85,6 +92,7 @@ class UpdateCourseHandler(CourseHandler):
 		result = self.groups.rename(
 			course_group_name(old_name, old_year),
 			course_group_name(new_name, new_year),
+			sudo_password=sudo_password,
 		)
 		return {
 			**result,
