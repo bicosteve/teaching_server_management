@@ -3,38 +3,18 @@
 from __future__ import annotations
 
 import re
-import subprocess
 
 from config import (
 	COURSE_GROUP_DIGIT_PREFIX,
 	GETENT,
-	GROUP_COMMAND_TIMEOUT,
 	GROUP_LOOKUP_TIMEOUT,
 	LINUX_GROUP_NAME_MAX_LEN,
 	LINUX_GROUP_NAME_PATTERN,
 	GROUPADD,
 	GROUPDEL,
 	GROUPMOD,
-	SUDO,
 )
-
-
-class ShellCommandError(RuntimeError):
-	"""Raised when a local shell command fails."""
-
-	def __init__(
-		self,
-		command: list[str],
-		returncode: int,
-		stdout: str = "",
-		stderr: str = "",
-	) -> None:
-		detail = (stderr or stdout or "").strip() or f"exit {returncode}"
-		super().__init__(f"{' '.join(command)} failed: {detail}")
-
-
-class SudoAuthenticationError(RuntimeError):
-	"""Raised when sudo rejects the password. Local-only, do not report to the server."""
+from operations.shell import run_command, run_sudo
 
 
 def validate_group_name(group_name: str) -> None:
@@ -44,10 +24,17 @@ def validate_group_name(group_name: str) -> None:
 		raise ValueError(f"Invalid Linux group name: {group_name}")
 
 
+def slugify(value: str) -> str:
+	"""Normalize a label to a lowercase hyphenated slug."""
+	if not isinstance(value, str):
+		raise ValueError("Missing or invalid value for slug")
+	return re.sub(r"[^a-z0-9]+", "-", value.strip().lower()).strip("-")
+
+
 def course_group_name(name: str, academic_year: str) -> str:
 	"""Derive a Linux group name from course payload fields."""
-	base = re.sub(r"[^a-z0-9]+", "-", name.strip().lower()).strip("-")
-	year = re.sub(r"[^a-z0-9]+", "-", academic_year.strip().lower()).strip("-")
+	base = slugify(name)
+	year = slugify(academic_year)
 	if not base or not year:
 		raise ValueError("Cannot derive group name from empty name or academic_year")
 
@@ -63,46 +50,6 @@ def course_group_name(name: str, academic_year: str) -> str:
 	candidate = f"{COURSE_GROUP_DIGIT_PREFIX}{base}{suffix}"
 	validate_group_name(candidate)
 	return candidate
-
-
-def run_sudo(command: list[str], password: str) -> None:
-	"""Run command under sudo, reading password from stdin (not stored)."""
-	reported = list(command)
-	completed = subprocess.run(
-		[SUDO, "-S", "-k", "--", *command],
-		input=f"{password}\n",
-		capture_output=True,
-		text=True,
-		timeout=GROUP_COMMAND_TIMEOUT,
-		check=False,
-	)
-	if completed.returncode == 0:
-		return
-
-	stderr = completed.stderr or ""
-	stdout = completed.stdout or ""
-	if is_sudo_auth_failure(stderr, stdout):
-		raise SudoAuthenticationError((stderr or stdout).strip() or "incorrect sudo password")
-	raise ShellCommandError(
-		reported,
-		completed.returncode,
-		stdout=stdout,
-		stderr=stderr,
-	)
-
-
-def is_sudo_auth_failure(stderr: str, stdout: str = "") -> bool:
-	text = f"{stderr}\n{stdout}".lower()
-	return any(
-		hint in text
-		for hint in (
-			"incorrect password",
-			"sorry, try again",
-			"a password is required",
-			"authentication failure",
-			"authentication failed",
-		)
-	)
 
 
 class LinuxGroupManager:
@@ -141,13 +88,7 @@ class LinuxGroupManager:
 		}
 
 	def exists(self, group_name: str) -> bool:
-		result = subprocess.run(
-			[GETENT, "group", group_name],
-			capture_output=True,
-			text=True,
-			timeout=GROUP_LOOKUP_TIMEOUT,
-			check=False,
-		)
+		result = run_command([GETENT, "group", group_name], timeout=GROUP_LOOKUP_TIMEOUT)
 		return result.returncode == 0
 
 	@staticmethod

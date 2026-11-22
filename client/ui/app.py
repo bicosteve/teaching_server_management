@@ -10,7 +10,7 @@ from rich.console import Console
 
 from api.client import TsmClient
 from operations.dispatcher import OperationDispatcher
-from operations.handlers.groups import SudoAuthenticationError
+from operations.shell import SudoAuthenticationError
 from ui.keys import mouse_tracking, read_key
 from ui.prompts import ask_login, ask_password
 from ui.render import build_screen

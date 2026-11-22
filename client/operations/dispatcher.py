@@ -8,6 +8,7 @@ from operations.handlers.courses import (
 	DeleteCourseHandler,
 	UpdateCourseHandler,
 )
+from operations.handlers.files import CourseDirectoryManager
 from operations.handlers.groups import LinuxGroupManager
 
 
@@ -19,10 +20,11 @@ class OperationDispatcher:
 			self.handlers = handlers
 			return
 		groups = LinuxGroupManager()
+		files = CourseDirectoryManager()
 		self.handlers = {
-			"CREATE_COURSE": CreateCourseHandler(groups),
-			"UPDATE_COURSE": UpdateCourseHandler(groups),
-			"DELETE_COURSE": DeleteCourseHandler(groups),
+			"CREATE_COURSE": CreateCourseHandler(groups, files),
+			"UPDATE_COURSE": UpdateCourseHandler(groups, files),
+			"DELETE_COURSE": DeleteCourseHandler(groups, files),
 		}
 
 	def execute(self, operation: dict[str, Any], *, sudo_password: str) -> dict:
