@@ -98,7 +98,12 @@
 							#{status.first ? '' : 'border-top-1 surface-border'}">
 							<span class="text-sm font-medium text-color-secondary sm:w-10rem flex-none">#{field.label()}</span>
 							<span class="text-sm font-normal white-space-normal word-break-all">
-								#{empty field.value() ? msg['teacher.requests.noTarget'] : field.value()}
+								<h:outputText value="#{msg['teacher.requests.noTarget']}"
+									rendered="#{empty field.value()}"/>
+								<h:outputText value="#{field.value()}"
+									rendered="#{not empty field.value() and not field.markdown()}"/>
+								<h:outputText value="#{markdownBean.html(field.value())}" escape="false"
+									rendered="#{not empty field.value() and field.markdown()}"/>
 							</span>
 						</div>
 					</ui:repeat>

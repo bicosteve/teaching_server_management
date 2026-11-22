@@ -7,21 +7,15 @@
 		<ui:param name="title" value="#{msg['nav.manageCourse']}"/>
 	</ui:include>
 
-	<p:card styleClass="w-full md:w-30rem">
-		<div class="ui-fluid">
-			<div class="field">
+	<p:card styleClass="w-full">
+		<div class="flex flex-row align-items-end gap-3 mb-3">
+			<div class="field ui-fluid flex-1 min-w-0 mb-0">
 				<p:outputLabel for="manageCourseName" value="#{msg['teacher.course.name']}"
 					styleClass="text-sm font-normal"/>
 				<p:inputText id="manageCourseName" value="#{teacherCourseBean.name}"
 					required="true" requiredMessage="#{msg['teacher.course.name.required']}" maxlength="200"/>
 			</div>
-			<div class="field">
-				<p:outputLabel for="manageCourseDescription" value="#{msg['teacher.course.description']}"
-					styleClass="text-sm font-normal"/>
-				<p:inputTextarea id="manageCourseDescription" value="#{teacherCourseBean.description}"
-					rows="4" autoResize="false" maxlength="2000" styleClass="w-full"/>
-			</div>
-			<div class="field">
+			<div class="field ui-fluid w-12rem flex-none mb-0">
 				<p:outputLabel for="manageAcademicYear" value="#{msg['teacher.course.academicYear']}"
 					styleClass="text-sm font-normal"/>
 				<p:selectOneMenu id="manageAcademicYear" value="#{teacherCourseBean.academicYear}"
@@ -29,7 +23,7 @@
 					<f:selectItems value="#{teacherCourseBean.academicYearOptions}"/>
 				</p:selectOneMenu>
 			</div>
-			<div class="flex flex-wrap gap-2">
+			<div class="flex flex-nowrap gap-2 flex-none">
 				<p:commandButton value="#{msg['teacher.course.save']}" icon="pi pi-check"
 					action="#{teacherCourseBean.saveManagedCourse}"
 					update=":appShell:appNav :appShell:appContent" process="@form"/>
@@ -40,12 +34,13 @@
 				<p:commandButton value="#{msg['teacher.course.remove']}" icon="pi pi-trash"
 					action="#{teacherCourseBean.removeManagedCourse}"
 					update=":appShell:appNav :appShell:appContent" process="@this"
-					styleClass="ui-button-danger ml-auto">
+					styleClass="ui-button-danger">
 					<p:confirm header="#{msg['teacher.course.removeConfirmHeader']}"
 						message="#{msg['teacher.course.removeConfirm']}" icon="pi pi-exclamation-triangle"/>
 				</p:commandButton>
 			</div>
 		</div>
+		<ui:include src="/teacher/fragments/course-description-editor.xhtml"/>
 	</p:card>
 
 	<p:confirmDialog global="true" showEffect="fade" hideEffect="fade" responsive="true">
