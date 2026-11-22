@@ -1,0 +1,25 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="jakarta.faces.facelets"
+	xmlns:h="jakarta.faces.html"
+	xmlns:p="http://primefaces.org/ui">
+	<div class="field ui-fluid mb-0">
+		<div class="flex align-items-baseline justify-content-between gap-2 mb-2">
+			<p:outputLabel for="courseDescription" value="#{msg['teacher.course.description']}"
+				styleClass="text-sm font-normal m-0"/>
+			<span class="text-xs font-normal text-color-secondary">#{msg['teacher.course.descriptionMarkdown']}</span>
+		</div>
+		<p:inputTextarea id="courseDescription" value="#{teacherCourseBean.description}"
+			rows="6" autoResize="false" maxlength="2000" styleClass="w-full">
+			<p:ajax event="blur" process="@this" update="courseDescriptionPreview"/>
+		</p:inputTextarea>
+		<span class="block text-xs font-medium text-color-secondary mt-3 mb-2">#{msg['teacher.course.descriptionPreview']}</span>
+		<h:panelGroup id="courseDescriptionPreview" layout="block"
+			styleClass="surface-ground border-1 surface-border border-round p-3 min-h-6rem overflow-auto">
+			<h:outputText value="#{msg['teacher.course.noDescription']}"
+				styleClass="text-sm font-normal text-color-secondary"
+				rendered="#{empty teacherCourseBean.description}"/>
+			<h:outputText value="#{markdownBean.html(teacherCourseBean.description)}"
+				escape="false" rendered="#{not empty teacherCourseBean.description}"/>
+		</h:panelGroup>
+	</div>
+</ui:composition>
