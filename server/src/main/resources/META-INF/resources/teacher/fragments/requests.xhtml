@@ -1,5 +1,6 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
 	xmlns:ui="jakarta.faces.facelets"
+	xmlns:h="jakarta.faces.html"
 	xmlns:p="http://primefaces.org/ui">
 	<ui:include src="/includes/page-header.xhtml">
 		<ui:param name="title" value="#{msg['teacher.requests.heading']}"/>
@@ -9,25 +10,35 @@
 	<p:messages id="requestsMessages" showDetail="false" closable="true" styleClass="mb-3"/>
 	<p:card>
 		<p:dataTable id="operationsList" value="#{teacherRequestsBean.operations}" var="operation"
-			emptyMessage="#{msg['teacher.requests.empty']}" stripedRows="true" styleClass="w-full">
-			<p:column headerText="#{msg['teacher.requests.type']}">
-				<span class="text-sm font-normal">#{operation.type()}</span>
+			emptyMessage="#{msg['teacher.requests.empty']}" stripedRows="true"
+			styleClass="w-full" tableStyle="width:100%; table-layout:fixed"
+			selectionMode="single" selection="#{teacherRequestsBean.selected}"
+			rowKey="#{operation.id()}" rowSelectMode="new">
+			<p:ajax event="rowSelect" listener="#{teacherRequestsBean.onRowSelect}"
+				update=":appShell:operationDetailDialog :appShell:operationsList" process="@this"
+				oncomplete="PF('operationDetailDialog').show()"/>
+
+			<p:column headerText="#{msg['teacher.requests.type']}" style="width:20%">
+				<span class="block overflow-hidden white-space-nowrap text-overflow-ellipsis text-sm font-normal"
+					title="#{operation.type()}">#{operation.type()}</span>
 			</p:column>
-			<p:column headerText="#{msg['teacher.requests.target']}">
-				<span class="text-sm font-normal text-color-secondary">
+			<p:column headerText="#{msg['teacher.requests.target']}" style="width:32%">
+				<span class="block overflow-hidden white-space-nowrap text-overflow-ellipsis text-sm font-normal text-color-secondary"
+					title="#{operation.target()}">
 					#{empty operation.target() ? msg['teacher.requests.noTarget'] : operation.target()}
 				</span>
 			</p:column>
-			<p:column headerText="#{msg['teacher.requests.status']}" style="width:9rem">
+			<p:column headerText="#{msg['teacher.requests.status']}" style="width:14%">
 				<span title="#{msg[operation.statusTooltipKey()]}">
 					<p:tag value="#{operation.status()}" severity="#{operation.statusSeverity()}"/>
 				</span>
 			</p:column>
-			<p:column headerText="#{msg['teacher.requests.createdAt']}" style="width:12rem">
-				<span class="text-sm font-normal text-color-secondary">#{operation.createdAt()}</span>
+			<p:column headerText="#{msg['teacher.requests.createdAt']}" style="width:20%">
+				<span class="block overflow-hidden white-space-nowrap text-overflow-ellipsis text-sm font-normal text-color-secondary"
+					title="#{operation.createdAt()}">#{operation.createdAt()}</span>
 			</p:column>
-			<p:column headerText="#{msg['teacher.requests.actions']}" style="width:8rem">
-				<div class="flex gap-1">
+			<p:column headerText="#{msg['teacher.requests.actions']}" style="width:14%">
+				<div class="flex gap-1" onclick="event.stopPropagation()">
 					<p:commandButton icon="pi pi-pencil" title="#{msg['teacher.requests.edit']}"
 						ariaLabel="#{msg['teacher.requests.edit']}"
 						action="#{teacherNavBean.showEditCourse(operation.id())}"
@@ -53,4 +64,55 @@
 		<p:commandButton value="#{msg['teacher.course.cancel']}" type="button"
 			styleClass="ui-confirmdialog-no ui-button-outlined" icon="pi pi-times"/>
 	</p:confirmDialog>
+
+	<p:dialog id="operationDetailDialog" widgetVar="operationDetailDialog"
+		header="#{msg['teacher.requests.detailTitle']}" modal="true" appendTo="@(body)"
+		draggable="false" resizable="false" closable="true" closeOnEscape="true"
+		blockScroll="true" width="560" position="center"
+		contentStyle="height:auto; max-height:min(70vh, calc(100vh - 8rem)); overflow-y:auto"
+		onShow="var d=PF('operationDetailDialog'); d.content.css({height:'auto','max-height':'min(70vh, calc(100vh - 8rem))','overflow-y':'auto'}); d.initPosition();">
+		<h:panelGroup layout="block" styleClass="flex flex-column gap-3"
+			rendered="#{teacherRequestsBean.selected ne null}">
+			<div class="flex align-items-center justify-content-between gap-2 flex-wrap">
+				<span class="text-sm font-medium">#{teacherRequestsBean.selected.type()}</span>
+				<span title="#{msg[teacherRequestsBean.selected.statusTooltipKey()]}">
+					<p:tag value="#{teacherRequestsBean.selected.status()}"
+						severity="#{teacherRequestsBean.selected.statusSeverity()}"/>
+				</span>
+			</div>
+
+			<ui:repeat value="#{teacherRequestsBean.selected.metaFields()}" var="field">
+				<div class="flex flex-column gap-1">
+					<span class="text-xs font-medium text-color-secondary">#{msg[field.labelKey()]}</span>
+					<span class="text-sm font-normal">
+						#{empty field.value() ? msg['teacher.requests.noTarget'] : field.value()}
+					</span>
+				</div>
+			</ui:repeat>
+
+			<div class="flex flex-column gap-2">
+				<span class="text-xs font-medium text-color-secondary">#{msg['teacher.requests.payload']}</span>
+				<div class="surface-ground border-1 surface-border border-round overflow-hidden">
+					<ui:repeat value="#{teacherRequestsBean.selected.payloadFields()}" var="field" varStatus="status">
+						<div class="flex flex-column sm:flex-row sm:align-items-start gap-1 sm:gap-3 px-3 py-2
+							#{status.first ? '' : 'border-top-1 surface-border'}">
+							<span class="text-sm font-medium text-color-secondary sm:w-10rem flex-none">#{field.label()}</span>
+							<span class="text-sm font-normal white-space-normal word-break-all">
+								<h:outputText value="#{msg['teacher.requests.noTarget']}"
+									rendered="#{empty field.value()}"/>
+								<h:outputText value="#{field.value()}"
+									rendered="#{not empty field.value() and not field.markdown()}"/>
+								<h:outputText value="#{markdownBean.html(field.value())}" escape="false"
+									rendered="#{not empty field.value() and field.markdown()}"/>
+							</span>
+						</div>
+					</ui:repeat>
+					<h:panelGroup layout="block" styleClass="px-3 py-2 text-sm font-normal text-color-secondary"
+						rendered="#{empty teacherRequestsBean.selected.payloadFields()}">
+						#{msg['teacher.requests.noTarget']}
+					</h:panelGroup>
+				</div>
+			</div>
+		</h:panelGroup>
+	</p:dialog>
 </ui:composition>

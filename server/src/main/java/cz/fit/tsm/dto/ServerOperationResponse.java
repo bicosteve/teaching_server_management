@@ -27,6 +27,10 @@ public record ServerOperationResponse(
 		String executionResult) {
 
 	public record PayloadField(String key, String label, String value) {
+
+		public boolean markdown() {
+			return "description".equals(key);
+		}
 	}
 
 	public record MetaField(String labelKey, Object value) {

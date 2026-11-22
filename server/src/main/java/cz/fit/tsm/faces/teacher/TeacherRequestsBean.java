@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.UUID;
 
+import org.primefaces.event.SelectEvent;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.SessionScope;
 import org.springframework.web.server.ResponseStatusException;
@@ -25,6 +26,7 @@ public class TeacherRequestsBean implements Serializable {
 	private final ServerOperationService serverOperationService;
 	private final HomeBean homeBean;
 	private List<ServerOperationResponse> operations = List.of();
+	private ServerOperationResponse selected;
 
 	public TeacherRequestsBean(ServerOperationService serverOperationService, HomeBean homeBean) {
 		this.serverOperationService = serverOperationService;
@@ -36,9 +38,33 @@ public class TeacherRequestsBean implements Serializable {
 		return operations;
 	}
 
+	public ServerOperationResponse getSelected() {
+		return selected;
+	}
+
+	public void setSelected(ServerOperationResponse selected) {
+		this.selected = selected;
+	}
+
+	public void onRowSelect(SelectEvent<ServerOperationResponse> event) {
+		reload();
+		UUID selectedId = event.getObject().id();
+		selected = operations.stream()
+				.filter(op -> op.id().equals(selectedId))
+				.findFirst()
+				.orElse(null);
+	}
+
 	public void reload() {
 		UserResponse user = homeBean.getCurrentUser();
 		operations = user == null ? List.of() : serverOperationService.listForRequester(user.id());
+		if (selected != null) {
+			UUID selectedId = selected.id();
+			selected = operations.stream()
+					.filter(op -> op.id().equals(selectedId))
+					.findFirst()
+					.orElse(null);
+		}
 	}
 
 	public void remove(UUID operationId) {

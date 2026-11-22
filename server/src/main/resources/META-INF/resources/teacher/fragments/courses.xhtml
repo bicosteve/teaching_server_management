@@ -36,8 +36,9 @@
 						<div class="text-sm font-normal text-color-secondary line-height-2 m-0 mb-2">
 							#{course.academicYear()}
 						</div>
-						<p class="m-0 text-sm font-normal text-color-secondary white-space-nowrap overflow-hidden text-overflow-ellipsis">
-							#{empty course.description() ? msg['teacher.course.noDescription'] : course.description()}
+						<p class="m-0 text-sm font-normal text-color-secondary white-space-nowrap overflow-hidden text-overflow-ellipsis"
+							title="#{markdownBean.plain(course.description())}">
+							#{empty course.description() ? msg['teacher.course.noDescription'] : markdownBean.plain(course.description())}
 						</p>
 					</p:commandLink>
 				</p:card>
