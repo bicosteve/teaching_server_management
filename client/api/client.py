@@ -88,14 +88,20 @@ class TsmClient:
 		return self.request("POST", path, **kwargs)
 
 	def request(self, method: str, path: str, **kwargs: Any) -> Any:
-		headers = dict(kwargs.pop("headers", {}) or {})
-		if self.access_token:
-			headers["Authorization"] = f"Bearer {self.access_token}"
-		response = self.http.request(method, path, headers=headers, **kwargs)
+		response = self._send(method, path, **kwargs)
+		if response.status_code == 401 and self.refresh_token:
+			self.refresh()
+			response = self._send(method, path, **kwargs)
 		response.raise_for_status()
 		if response.status_code == 204 or not response.content:
 			return None
 		return response.json()
+
+	def _send(self, method: str, path: str, **kwargs: Any) -> httpx.Response:
+		headers = dict(kwargs.get("headers") or {})
+		if self.access_token:
+			headers["Authorization"] = f"Bearer {self.access_token}"
+		return self.http.request(method, path, **{**kwargs, "headers": headers})
 
 	def store_tokens(self, payload: dict[str, Any]) -> None:
 		self.access_token = payload["accessToken"]

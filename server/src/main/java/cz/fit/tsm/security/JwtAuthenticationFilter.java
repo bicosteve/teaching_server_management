@@ -5,9 +5,7 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
@@ -45,7 +43,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
 		String accessToken = resolveBearerToken(request);
-		if (accessToken != null && !isLoggedIn()) {
+
+		if (accessToken != null) {
 			authenticateWithAccessToken(accessToken);
 		}
 		filterChain.doFilter(request, response);
@@ -69,11 +68,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			log.warn("bearer: invalid access token ({})", ex.getClass().getSimpleName());
 			SecurityContextHolder.clearContext();
 		}
-	}
-
-	private static boolean isLoggedIn() {
-		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-		return auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken);
 	}
 
 	private static String resolveBearerToken(HttpServletRequest request) {
