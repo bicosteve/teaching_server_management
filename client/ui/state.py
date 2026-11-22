@@ -12,6 +12,7 @@ class UiState:
 	cursor: int = 0
 	checked: set[str] = field(default_factory=set)
 	detail: dict[str, Any] | None = None
+	detail_scroll: int = 0
 	status: str | None = None
 
 	def clamp_cursor(self) -> None:
@@ -31,11 +32,18 @@ class UiState:
 			self.status = "No approved operations to open."
 			return
 		self.detail = self.operations[self.cursor]
+		self.detail_scroll = 0
 		self.status = None
 
 	def close_detail(self) -> None:
 		self.detail = None
+		self.detail_scroll = 0
 		self.status = None
+
+	def scroll_detail(self, delta: int) -> None:
+		if self.detail is None:
+			return
+		self.detail_scroll = max(0, self.detail_scroll + delta)
 
 	def toggle_check(self) -> None:
 		if not self.operations:

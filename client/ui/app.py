@@ -10,7 +10,7 @@ from rich.console import Console
 
 from api.client import TsmClient
 from operations.dispatcher import OperationDispatcher
-from ui.keys import read_key
+from ui.keys import mouse_tracking, read_key
 from ui.prompts import ask_login, ask_password
 from ui.render import build_screen
 from ui.state import UiState
@@ -59,16 +59,24 @@ class App:
 				self.run_checked(client)
 
 	def browse(self, client: TsmClient) -> str:
-		with self.console.screen() as screen:
+		with self.console.screen() as screen, mouse_tracking():
 			self.redraw(screen, client)
 			while True:
 				key = read_key()
+				if key == "ignore":
+					continue
 				if key in ("q", "ctrl-c"):
 					return "quit"
 
 				if self.state.detail is not None:
-					if key in ("esc", "backspace"):
+					if key in ("esc", "backspace", "left"):
 						self.state.close_detail()
+					elif key in ("up", "k"):
+						self.state.scroll_detail(-1)
+					elif key in ("down", "j"):
+						self.state.scroll_detail(1)
+					else:
+						continue
 					self.redraw(screen, client)
 					continue
 
@@ -91,12 +99,14 @@ class App:
 				self.redraw(screen, client)
 
 	def redraw(self, screen: Any, client: TsmClient) -> None:
+		size = self.console.size
 		screen.update(
 			build_screen(
 				base_url=client.base_url,
 				user=self.user,
 				state=self.state,
-				height=self.console.size.height,
+				height=size.height,
+				width=size.width,
 			)
 		)
 
@@ -113,6 +123,7 @@ class App:
 		self.state.prune_checked()
 		self.state.clamp_cursor()
 		self.state.detail = None
+		self.state.detail_scroll = 0
 
 	def run_checked(self, client: TsmClient) -> None:
 		selected = self.state.checked_operations()
