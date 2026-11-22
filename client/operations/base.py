@@ -9,5 +9,5 @@ class OperationHandler(ABC):
 		pass
 
 	@abstractmethod
-	def execute(self, params: dict[str, Any]) -> dict:
+	def execute(self, params: dict[str, Any], *, sudo_password: str) -> dict:
 		pass

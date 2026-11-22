@@ -20,9 +20,12 @@ LINUX_GROUP_NAME_PATTERN = re.compile(
 # Course Linux group naming
 COURSE_GROUP_DIGIT_PREFIX = "c-"
 
+# Course / project file tree root on the teaching server.
+FILES_ROOT = "/srv/teaching-server-management"
+
 # Subprocess timeouts (seconds).
 GROUP_LOOKUP_TIMEOUT = 10
-GROUP_COMMAND_TIMEOUT = 30
+COMMAND_TIMEOUT = 30
 
 # Absolute paths used by LinuxGroupManager.
 GROUPADD = "/usr/sbin/groupadd"
@@ -30,3 +33,11 @@ GROUPDEL = "/usr/sbin/groupdel"
 GROUPMOD = "/usr/sbin/groupmod"
 GETENT = "/usr/bin/getent"
 SUDO = "sudo"
+
+# Absolute paths used by CourseDirectoryManager.
+MKDIR = "/bin/mkdir"
+MV = "/bin/mv"
+RM = "/bin/rm"
+RMDIR = "/bin/rmdir"
+CHOWN = "/bin/chown"
+CHMOD = "/bin/chmod"

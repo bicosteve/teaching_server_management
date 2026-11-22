@@ -8,29 +8,26 @@ from operations.handlers.courses import (
 	DeleteCourseHandler,
 	UpdateCourseHandler,
 )
+from operations.handlers.files import CourseDirectoryManager
 from operations.handlers.groups import LinuxGroupManager
 
 
 class OperationDispatcher:
 	"""Route a server operation dict to the matching handler."""
 
-	def __init__(
-		self,
-		handlers: dict[str, OperationHandler] | None = None,
-		*,
-		sudo_password: str | None = None,
-	) -> None:
+	def __init__(self, handlers: dict[str, OperationHandler] | None = None) -> None:
 		if handlers is not None:
 			self.handlers = handlers
 			return
-		groups = LinuxGroupManager(sudo_password=sudo_password)
+		groups = LinuxGroupManager()
+		files = CourseDirectoryManager()
 		self.handlers = {
-			"CREATE_COURSE": CreateCourseHandler(groups),
-			"UPDATE_COURSE": UpdateCourseHandler(groups),
-			"DELETE_COURSE": DeleteCourseHandler(groups),
+			"CREATE_COURSE": CreateCourseHandler(groups, files),
+			"UPDATE_COURSE": UpdateCourseHandler(groups, files),
+			"DELETE_COURSE": DeleteCourseHandler(groups, files),
 		}
 
-	def execute(self, operation: dict[str, Any]) -> dict:
+	def execute(self, operation: dict[str, Any], *, sudo_password: str) -> dict:
 		op_type = operation.get("type")
 		if not isinstance(op_type, str) or not op_type:
 			raise ValueError("Missing or invalid operation type")
@@ -44,4 +41,4 @@ class OperationDispatcher:
 			raise ValueError(f"Unsupported operation: {op_type}")
 
 		handler.validate(payload)
-		return handler.execute(payload)
+		return handler.execute(payload, sudo_password=sudo_password)
