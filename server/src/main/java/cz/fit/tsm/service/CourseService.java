@@ -1,5 +1,6 @@
 package cz.fit.tsm.service;
 
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,12 +65,11 @@ public class CourseService {
 				academicYear,
 				CourseStatus.PENDING));
 
-		ServerOperation operation = serverOperationRepository.save(new ServerOperation(
+		ServerOperation operation = saveLinkedOperation(new ServerOperation(
 				ServerOperationType.CREATE_COURSE,
 				coursePayload(name, description, academicYear),
 				ServerOperationStatus.PENDING,
-				teacherId));
-		serverOperationCourseRepository.save(new ServerOperationCourse(operation.getId(), course.getId()));
+				teacherId), course.getId());
 		log.info("requestCourse: created course={} op={} teacher={}", course.getId(), operation.getId(), teacherId);
 		return CourseResponse.from(course);
 	}
@@ -97,31 +97,95 @@ public class CourseService {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "A course with this name and academic year already exists");
 		}
 
-		Map<String, Object> changedFields = changedCourseFields(course, name, description, academicYear);
-		course.updateDetails(name, description, academicYear);
-
 		Optional<ServerOperation> pendingCreate = findPendingCreateCourseOp(courseId, teacherId);
 		if (pendingCreate.isPresent()) {
-			ServerOperation operation = pendingCreate.get();
-			operation.replacePayload(coursePayload(name, description, academicYear));
-			operation.markPending();
-			serverOperationRepository.save(operation);
-			log.info("updateCourse: patched pending create op={} course={} teacher={}",
-					operation.getId(), courseId, teacherId);
-		}
-		else if (!changedFields.isEmpty()) {
-			course.markPending();
-			ServerOperation operation = serverOperationRepository.save(new ServerOperation(
-					ServerOperationType.UPDATE_COURSE,
-					changedFields,
-					ServerOperationStatus.PENDING,
-					teacherId));
-			serverOperationCourseRepository.save(new ServerOperationCourse(operation.getId(), course.getId()));
-			log.info("updateCourse: enqueued UPDATE_COURSE op={} fields={} course={} teacher={}",
-					operation.getId(), changedFields.keySet(), courseId, teacherId);
+			return patchPendingCreate(course, pendingCreate.get(), name, description, academicYear, teacherId);
 		}
 
+		Optional<ServerOperation> pendingUpdate = findPendingUpdateCourseOp(courseId, teacherId);
+		SyncedBaseline synced = syncedBaseline(course, pendingUpdate);
+		String previousDescription = course.getDescription();
+		course.updateDetails(name, description, academicYear);
+
+		if (!Objects.equals(previousDescription, description)) {
+			recordDescriptionHistory(course, teacherId, synced, previousDescription, description);
+		}
+		syncPendingRename(course, teacherId, pendingUpdate, synced, name, description, academicYear);
+
 		return CourseResponse.from(courseRepository.save(course));
+	}
+
+	private CourseResponse patchPendingCreate(Course course, ServerOperation operation, String name,
+			String description, String academicYear, UUID teacherId) {
+		course.updateDetails(name, description, academicYear);
+		operation.replacePayload(coursePayload(name, description, academicYear));
+		operation.markPending();
+		serverOperationRepository.save(operation);
+		log.info("updateCourse: patched pending create op={} course={} teacher={}",
+				operation.getId(), course.getId(), teacherId);
+		return CourseResponse.from(courseRepository.save(course));
+	}
+
+	private void recordDescriptionHistory(Course course, UUID teacherId, SyncedBaseline synced,
+			String previousDescription, String description) {
+		Map<String, Object> history = new LinkedHashMap<>();
+		history.put("description", description);
+		putPrevious(history, synced.name(), previousDescription, synced.academicYear());
+		ServerOperation operation = new ServerOperation(
+				ServerOperationType.UPDATE_COURSE,
+				history,
+				ServerOperationStatus.COMPLETED,
+				teacherId);
+		operation.markCompleted("Description updated");
+		saveLinkedOperation(operation, course.getId());
+		log.info("updateCourse: recorded description history op={} course={} teacher={}",
+				operation.getId(), course.getId(), teacherId);
+	}
+
+	private void syncPendingRename(Course course, UUID teacherId, Optional<ServerOperation> pendingUpdate,
+			SyncedBaseline synced, String name, String description, String academicYear) {
+		boolean renameChanged = !Objects.equals(synced.name(), name)
+				|| !Objects.equals(synced.academicYear(), academicYear);
+		if (!renameChanged) {
+			pendingUpdate.ifPresent(operation -> {
+				serverOperationService.delete(operation.getId(), teacherId);
+				log.info("updateCourse: cleared pending UPDATE_COURSE op={} course={} teacher={}",
+						operation.getId(), course.getId(), teacherId);
+			});
+			return;
+		}
+
+		Map<String, Object> changedFields = changedCourseFields(
+				synced.name(), synced.description(), synced.academicYear(), name, description, academicYear);
+		course.markPending();
+		if (pendingUpdate.isPresent()) {
+			ServerOperation operation = pendingUpdate.get();
+			operation.replacePayload(changedFields);
+			operation.markPending();
+			serverOperationRepository.save(operation);
+			log.info("updateCourse: overwrote pending UPDATE_COURSE op={} fields={} course={} teacher={}",
+					operation.getId(), changedFields.keySet(), course.getId(), teacherId);
+			return;
+		}
+
+		ServerOperation operation = saveLinkedOperation(new ServerOperation(
+				ServerOperationType.UPDATE_COURSE,
+				changedFields,
+				ServerOperationStatus.PENDING,
+				teacherId), course.getId());
+		log.info("updateCourse: enqueued UPDATE_COURSE op={} fields={} course={} teacher={}",
+				operation.getId(), changedFields.keySet(), course.getId(), teacherId);
+	}
+
+	private static SyncedBaseline syncedBaseline(Course course, Optional<ServerOperation> pendingUpdate) {
+		if (pendingUpdate.isEmpty()) {
+			return new SyncedBaseline(course.getName(), course.getDescription(), course.getAcademicYear());
+		}
+		Map<String, Object> payload = pendingUpdate.get().getPayload();
+		return new SyncedBaseline(
+				requirePrevious(payload, "previous_name"),
+				requirePrevious(payload, "previous_description"),
+				requirePrevious(payload, "previous_academic_year"));
 	}
 
 	@Transactional
@@ -142,13 +206,11 @@ public class CourseService {
 			return;
 		}
 
-		Map<String, Object> payload = coursePayload(course.getName(), course.getDescription(), course.getAcademicYear());
-		ServerOperation operation = serverOperationRepository.save(new ServerOperation(
+		ServerOperation operation = saveLinkedOperation(new ServerOperation(
 				ServerOperationType.DELETE_COURSE,
-				payload,
+				coursePayload(course.getName(), course.getDescription(), course.getAcademicYear()),
 				ServerOperationStatus.PENDING,
-				teacherId));
-		serverOperationCourseRepository.save(new ServerOperationCourse(operation.getId(), course.getId()));
+				teacherId), course.getId());
 		log.info("removeCourse: enqueued DELETE_COURSE op={} course={} teacher={}",
 				operation.getId(), courseId, teacherId);
 	}
@@ -185,6 +247,12 @@ public class CourseService {
 		return CourseRequestResponse.from(operation, course);
 	}
 
+	private ServerOperation saveLinkedOperation(ServerOperation operation, UUID courseId) {
+		ServerOperation saved = serverOperationRepository.save(operation);
+		serverOperationCourseRepository.save(new ServerOperationCourse(saved.getId(), courseId));
+		return saved;
+	}
+
 	private Course requireOwnedCourse(UUID courseId, UUID teacherId) {
 		return courseRepository.findByIdAndTeacherId(courseId, teacherId)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found"));
@@ -206,6 +274,24 @@ public class CourseService {
 		return linkedOperations(courseId, teacherId).stream()
 				.filter(op -> op.getType() == ServerOperationType.CREATE_COURSE)
 				.findFirst();
+	}
+
+	private Optional<ServerOperation> findPendingUpdateCourseOp(UUID courseId, UUID teacherId) {
+		List<ServerOperation> pendingUpdates = linkedOperations(courseId, teacherId).stream()
+				.filter(op -> op.getType() == ServerOperationType.UPDATE_COURSE)
+				.filter(op -> op.getStatus() == ServerOperationStatus.PENDING)
+				.sorted(Comparator.comparing(ServerOperation::getCreatedAt))
+				.toList();
+		if (pendingUpdates.isEmpty()) {
+			return Optional.empty();
+		}
+		for (int i = 1; i < pendingUpdates.size(); i++) {
+			ServerOperation duplicate = pendingUpdates.get(i);
+			serverOperationService.delete(duplicate.getId(), teacherId);
+			log.info("updateCourse: dropped duplicate pending UPDATE_COURSE op={} course={} teacher={}",
+					duplicate.getId(), courseId, teacherId);
+		}
+		return Optional.of(pendingUpdates.getFirst());
 	}
 
 	private List<ServerOperation> linkedOperations(UUID courseId, UUID teacherId) {
@@ -231,17 +317,32 @@ public class CourseService {
 		return payload;
 	}
 
-	private static Map<String, Object> changedCourseFields(Course course, String name, String description,
-			String academicYear) {
+	private static Map<String, Object> changedCourseFields(String syncedName, String syncedDescription,
+			String syncedAcademicYear, String name, String description, String academicYear) {
 		Map<String, Object> payload = new LinkedHashMap<>();
-		putIfChanged(payload, "name", course.getName(), name);
-		putIfChanged(payload, "description", course.getDescription(), description);
-		putIfChanged(payload, "academic_year", course.getAcademicYear(), academicYear);
-		if (payload.containsKey("name") || payload.containsKey("academic_year")) {
-			payload.put("previous_name", course.getName());
-			payload.put("previous_academic_year", course.getAcademicYear());
+		putIfChanged(payload, "name", syncedName, name);
+		putIfChanged(payload, "description", syncedDescription, description);
+		putIfChanged(payload, "academic_year", syncedAcademicYear, academicYear);
+		if (!payload.isEmpty()) {
+			putPrevious(payload, syncedName, syncedDescription, syncedAcademicYear);
 		}
 		return payload;
+	}
+
+	private static void putPrevious(Map<String, Object> payload, String name, String description,
+			String academicYear) {
+		payload.put("previous_name", name);
+		payload.put("previous_description", description);
+		payload.put("previous_academic_year", academicYear);
+	}
+
+	private static String requirePrevious(Map<String, Object> payload, String key) {
+		if (!payload.containsKey(key)) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT,
+					"Pending update is incomplete; cancel it and submit the change again");
+		}
+		Object value = payload.get(key);
+		return value == null ? null : value.toString();
 	}
 
 	private static void putIfChanged(Map<String, Object> payload, String key, Object current, Object next) {
@@ -256,5 +357,8 @@ public class CourseService {
 		}
 		String trimmed = value.trim();
 		return trimmed.isEmpty() ? null : trimmed;
+	}
+
+	private record SyncedBaseline(String name, String description, String academicYear) {
 	}
 }

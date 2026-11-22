@@ -15,6 +15,7 @@ UPDATE_FIELDS = {
 	"academic_year",
 	"previous_name",
 	"previous_academic_year",
+	"previous_description",
 }
 
 
